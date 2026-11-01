@@ -1,0 +1,159 @@
+AWS Certification
+-----------------
+
+AWS Certified Developer - Associate (https://learn.cantrill.io/courses/1101194/lectures/63972849)
+
+1. INTRODUCTION & SCENARIO 								- DONE					
+2. Course Fundamentals and AWS Accounts 				- DONE
+3. Cloud, Networking and Technical Fundamentals 		- DONE
+4. AWS Fundamentals
+5. IAM, ACCOUNTS AND AWS ORGANISATIONS
+6. SIMPLE STORAGE SERVICE (S3)
+7. Security
+8. VIRTUAL PRIVATE CLOUD (VPC) BASICS
+9. ELASTIC COMPUTE CLOUD (EC2) BASICS
+10. Monitoring and Logging
+11. CONTAINERS, ECS & ECR
+12. Advanced EC2
+
+13. Infrastructure as Code (CloudFormation)
+14. Global Service Discovery and Content Delivery (R53 and CloudFront)
+
+15. DATABASES (SQL)
+16. Advanced Storage
+
+17. Scaling, Load Balancing & High-Availability
+18. AWS CLI, DEVELOPER TOOLS & CICD (CODE*)
+
+19. Application Services, Event-Driven & Serverless
+20. AWS Lambda In-Depth
+21. APIs & API Gateway In-Depth
+22. NOSQL Databases & DynamoDB
+23. Elastic Beanstalk In-Depth
+24. Exam Prep
+
+
+
+
+
+
+
+
+---------------
+
+
+Source:
+	- AWS Playlist: https://www.youtube.com/playlist?list=PL0tP8lerTbX3mKdZYfJwXcKf6SOfmQcgl
+	- https://ibm-learning.udemy.com/course/aws-certified-developer-associate-dva-c01
+
+Topics
+
+- AWS Intro and account Setup 
+	https://www.youtube.com/watch?v=VLjlle_8bwE&list=PL0tP8lerTbX3mKdZYfJwXcKf6SOfmQcgl&index=3&t=223s&pp=iAQB
+	https://www.youtube.com/watch?v=otvUmZcAd34&list=PL0tP8lerTbX3mKdZYfJwXcKf6SOfmQcgl&index=4&pp=iAQB
+
+	Section 1, 2, 3
+
+- IAM and AWS CLI
+	https://www.youtube.com/watch?v=CH1EhkBzkyo&list=PL0tP8lerTbX3mKdZYfJwXcKf6SOfmQcgl&index=5&pp=iAQB
+	Section 4
+
+- AWS EC2 Instance and security groups
+	AWS EC2 Instance & Security Groups: A Complete Beginner’s Guide [HINDI]
+	Section 5, 6
+
+- AWS ELB
+	https://www.youtube.com/watch?v=QTTn-RaVZn4&list=PL0tP8lerTbX3mKdZYfJwXcKf6SOfmQcgl&index=9&pp=iAQB
+	Section 7
+
+- AWS RDS
+	https://www.youtube.com/watch?v=3WdoBWdkEBA&list=PL0tP8lerTbX3mKdZYfJwXcKf6SOfmQcgl&index=11&pp=iAQB
+	Section 8
+ 
+- Route S3 and VPC
+	https://www.youtube.com/watch?v=csXEbgwH7Vs&list=PL0tP8lerTbX3mKdZYfJwXcKf6SOfmQcgl&index=17&pp=iAQB
+	https://www.youtube.com/watch?v=ZMJV5AIfVBE&list=PL0tP8lerTbX3mKdZYfJwXcKf6SOfmQcgl&index=15&pp=iAQB
+	https://www.youtube.com/watch?v=fCefDDQwjaA&list=PL0tP8lerTbX3mKdZYfJwXcKf6SOfmQcgl&index=16&pp=iAQB
+
+	Section 9, 10
+
+- AWS S3, AWS SDK
+	https://www.youtube.com/watch?v=9vK7fwAhVtA&list=PL0tP8lerTbX3mKdZYfJwXcKf6SOfmQcgl&index=10&pp=iAQB
+	Section 11, 12, 13, 14
+
+- Cloudfront
+	https://www.youtube.com/watch?v=akwAv_L1XQ4&list=PL0tP8lerTbX3mKdZYfJwXcKf6SOfmQcgl&index=20&pp=iAQB
+	Section 15
+
+- ECS
+	https://www.youtube.com/watch?v=kE9crVneLUk&list=PL0tP8lerTbX3mKdZYfJwXcKf6SOfmQcgl&index=14&pp=iAQB	
+	Section 16
+
+- AWS Beanstalk
+	Section 17
+
+- AWS Cloudformation
+	https://www.youtube.com/watch?v=JmjXWKO7hWg&list=PL0tP8lerTbX3mKdZYfJwXcKf6SOfmQcgl&index=18&pp=iAQB
+	Section 18
+
+- AWS Integration and Messaging
+	Section 19
+
+- Cloudwatch Monitoring
+	Section 20
+
+- AWS Serverless: Lambda, DynamoDB
+	https://www.youtube.com/watch?v=7U8hEV_1uLM&list=PL0tP8lerTbX3mKdZYfJwXcKf6SOfmQcgl&index=12&pp=iAQB0gcJCckJAYcqIYzv
+	https://www.youtube.com/watch?v=NWzfgAw_DYA&list=PL0tP8lerTbX3mKdZYfJwXcKf6SOfmQcgl&index=13&pp=iAQB
+	Section 21, 22
+
+- AWS CI/CD
+	Section 24
+
+
+
+Other topics
+
+- SSL/TLS
+	https://www.youtube.com/watch?v=I43NnHTeACk&list=PL0tP8lerTbX3mKdZYfJwXcKf6SOfmQcgl&index=23&pp=iAQB
+
+- Nginx
+	https://www.youtube.com/watch?v=NTOcdjMs8E4&list=PL0tP8lerTbX3mKdZYfJwXcKf6SOfmQcgl&index=24&pp=iAQB
+
+- Apache webserver
+	https://www.youtube.com/watch?v=NACRKwkXKO0&list=PL0tP8lerTbX3mKdZYfJwXcKf6SOfmQcgl&index=25&pp=iAQB
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

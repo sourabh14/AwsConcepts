@@ -1,0 +1,4320 @@
+AWS Notes
+---------
+
+Contents
+========
+
+1. AWS Intro
+2. IAM (Identity and Access Management)
+
+3. EC2 (Elastic Compute Cloud)
+4. EBS (Elastic Block Store)
+5. ELB (Elastic Load Balancer)
+6. ASG (Auto-Scaling Group)
+
+7. S3 (Simple Storage Service) and Advanced Concepts
+8. RDS (Relational Database Service)
+9. AWS Aurora
+10. AWS DynamoDB
+
+11. AWS Lambda
+12. AWS CloudFormation IAC 
+13. AWS Route 53
+14. AWS CloudFront CDN
+15. AWS VPC (Virtual Private Cloud)
+
+Containers on AWS
+16. AWS ECS (Elastic Container Service)
+17. AWS EKS (Elastic Kubernetes Service)
+
+AWS Integration & Messaging
+18. AWS SQS (Simple Queue Service)
+19. AWS SNS (Simple Notification Service)
+20. AWS Kinesis
+
+AWS Security & Encryption
+21. AWS KMS (Key Management Service)
+22. AWS Secret Manager
+23. AWS Certificate Manager (ACM)
+24. AWS Web Application Firewall (WAF)
+
+Other topics
+25. AWS Organizations
+26. Disaster Recovery & Migrations
+
+AWS Monitoring, Audit and Performance 
+27. CloudWatch 
+28. CloudTrail & AWS Config
+
+----------------------------------------------
+
+About Exam
+
+	Total Questions		65 (50 scored, 15 unscored)
+	Time Limit			130 minutes
+	Passing Score		720 out of 1000 (scaled)
+	Exam Cost			$150 USD (15K INR)
+
+Resources
+
+	AWS in one video (https://www.youtube.com/watch?v=N4sJj-SxX00)
+
+Practice exams:
+	- Tutorials Dojo (Jon Bonso)
+	- Stephane Maarek’s practice tests
+	- free official practice question set on AWS Skill Builder. 
+	For every wrong answer, add a row to your scenario tables.
+
+
+Do a few targeted hands-on labs:
+	A VPC with public and private subnets, a NAT Gateway, and access through Session Manager
+	An ALB with an ASG and a target-tracking scaling policy
+	S3 behind CloudFront with Origin Access Control
+	S3 → SQS → Lambda with a dead-letter queue
+	A billing alarm, which you should set up first anyway
+
+Book the exam once you consistently score 80% or more on full timed practice tests.
+
+Exam Day Tips for SAA-C03
+	- Read the LAST sentence first. The final sentence contains the actual question (e.g., "Which solution meets these requirements with the LEAST operational overhead?"). Read it before the scenario — it tells you what to optimize for.
+	- Watch for qualifiers. "Most cost-effective," "least operational overhead," "minimum RTO," and "highest availability" lead to different answers for the same scenario.
+	- Eliminate managed vs unmanaged. If the question asks for "least operational overhead," eliminate any answer that requires you to manage servers, patching, or scaling manually.
+	- Draw architecture diagrams. For complex questions, sketch the data flow on your scratch paper. It takes 30 seconds and prevents misreading the scenario.
+	- 130 minutes is tight. Unlike the CLF-C02, the SAA-C03 gives you about 2 minutes per question. Do not spend more than 3 minutes on any single question — flag it and move on.
+
+
+----------------------------------------------
+
+
+1. AWS Intro
+============
+	- AWS is Amazon's cloud computing platform
+	- It lets you rent computing resources over the internet and pay only for what you use.
+	- Most popular services:
+		Compute – Run applications and websites using virtual servers (e.g., Amazon EC2, AWS Lambda).
+		Storage – Store files, backups, and data (e.g., Amazon S3, Amazon EBS).
+		Databases – Managed SQL and NoSQL databases (e.g., Amazon RDS, DynamoDB).
+		Networking – Connect and secure applications (e.g., Amazon VPC, Route 53)
+		Content Delivery - Amazon Cloudfront
+		Machine Learning & AI – Build and deploy AI models with services like Amazon SageMaker and Amazon Bedrock
+		Security – Identity management, encryption, and monitoring (e.g., IAM, AWS KMS)
+
+
+	AWS Global Infrastructure
+	-------------------------
+		- AWS Global Infrastructure is the worldwide physical and networking infrastructure that AWS uses to run 
+			its cloud services.
+		- The easiest mental model is:
+			     Regions
+			        ↓
+			Availability Zones
+			        ↓
+			 Data Centers
+
+		Region
+		------
+			- An AWS Region is a separate geographic area where AWS has infrastructure.
+			 	ap-south-1       → Mumbai
+				ap-south-2       → Hyderabad
+				us-east-1        → N. Virginia
+			- A Region contains multiple Availability Zones. 
+			- Why choose region?
+				- Latency: Put your application closer to your users. 
+				- Compliance/data residency: Some applications have requirements about where data is stored.
+				- Service availability: Not every AWS service or feature is available in every Region.
+				- Cost: AWS pricing can differ by Region.
+
+		Availability Zone (AZ)
+		----------------------
+			- An Availability Zone is an isolated location within a Region.
+			- An AZ consists of one or more discrete data centers with redundant power, networking, and connectivity. 
+			- AZs in the same Region are connected by high-bandwidth, low-latency, redundant networking.
+
+				Mumbai Region
+				│
+				├── AZ-a
+				├── AZ-b
+				└── AZ-c
+
+				Region = geographic area
+				AZ = isolated infrastructure location within that Region
+
+				Why multiple AZs
+					- Suppose your application runs entirely in one AZ:
+
+					Region
+					└── AZ-a
+					    └── EC2
+
+					- If that AZ experiences an outage:
+
+						AZ-a ❌
+						   ↓
+						Application ❌
+
+					- Instead:
+
+						Region
+						├── AZ-a → EC2
+						├── AZ-b → EC2
+						└── AZ-c → EC2
+
+					- Now your application can be designed to continue operating if one AZ becomes unavailable.
+					- This is why AWS recommends deploying important workloads across multiple AZs for higher availability.
+
+		Edge Locations
+		--------------
+			- CloudFront uses a much larger global network of Points of Presence (PoPs)/edge locations to bring 
+				content closer to users. AWS currently lists 750+ CloudFront PoPs and 15 regional edge caches.
+
+	Ways to access AWS Services:
+	---------------------------
+
+		AWS Console
+		-----------
+			- web-based graphical interface through which you manage your AWS services
+			Eg: https://us-east-1.console.aws.amazon.com/iam/home?region=us-east-1#/home
+
+			root user
+			using email
+
+			iam user
+			account id: sourabh-aws-account
+			username: iamadmin	
+
+
+		CloudShell
+		---------
+
+		AWS SDKs and APIs
+		-----------------
+			- code based access to aws
+
+			IAM ADMIN access keys
+
+			# Following secrets are now deleted
+			access-key-id: 
+			secret-access-key: 
+
+
+		AWS CLI 
+		-------
+			- Install through homebrew
+			- Benefit of cli is - you can automate things
+
+			# Check installation
+			aws --version
+
+			# Create iam admin profile. For prod use iamadmin-prod
+			aws configure --profile iamadmin-general
+
+			# Login to AWS
+			aws login
+
+			# AWS configure
+
+			# List iam users
+			aws iam list-users
+
+				{
+				    "Users": [
+				        {
+				            "Path": "/",
+				            "UserName": "iamadmin",
+				            "UserId": "AIDAYKR4ZKDADBAT7GP4A",
+				            "Arn": "arn:aws:iam::572431880384:user/iamadmin",   (Amazon resource name: a unique text string that identifies that specific user across all of Amazon Web Services)
+				            "CreateDate": "2025-12-17T11:18:05+00:00",
+				            "PasswordLastUsed": "2026-08-22T04:26:12+00:00"
+				        }
+				    ]
+				}
+
+			# List s3 buckets
+			aws s3 ls
+
+			# 
+			aws sts get-caller-identity
+
+
+
+2. IAM (Identity and Access Management)
+=======================================
+	- IAM is AWS's service for controlling who can access AWS resources and what they are allowed to do.
+	- IAM = authentication + authorization for AWS resources
+	- Four concepts:
+
+		IAM User: 
+			- represents a person or application identity within an AWS account
+			- A user can have permissions attached through policies
+
+		IAM Groups
+			- A Group is a collection of IAM users.
+			- You can attach a policy to the group: This is easier than attaching the same policy separately to every user.
+
+		IAM Role
+			- IAM Role is an identity that can be assumed temporarily by a trusted entity.
+			- Eg: 
+				- Suppose you have an application running on an EC2 instance. It needs to read files from an S3 bucket.
+				- Instead of storing AWS access keys inside your application, you attach an IAM Role to the EC2 instance. AWS provides temporary credentials to the application, allowing it to access S3.
+				Steps:
+					- Create an IAM Role.
+					- Give it permission to read a particular S3 bucket.
+					- Attach the role to your EC2 instance.
+					- EC2 automatically obtains temporary credentials.
+					- Application uses those credentials to access S3.
+					- You don't need to put: AWS_ACCESS_KEY_ID=... AWS_SECRET_ACCESS_KEY=... inside your application.
+					- You don't need to manually refresh them. The AWS SDK's default credentials provider retrieves refreshed credentials from the EC2 metadata service when needed.
+			- Use IAM Roles for applications running on AWS instead of hardcoding long-term access keys.
+
+			Spring boot app -> aws sdk -> Automatically discovers EC2 role credentials -> EC2 Instance Metadata Service (IMDS) Provides temporary access key, secret key and session token
+
+
+
+		IAM Policy
+			- A policy defines what actions are allowed or denied.
+			- A policy is usually written in JSON. For example:
+
+			{
+			  "Version": "2012-10-17",
+			  "Statement": [
+			    {
+			      "Effect": "Allow",
+			      "Action": "s3:GetObject",
+			      "Resource": "arn:aws:s3:::my-bucket/*"
+			    }
+			  ]
+			}
+
+			Two types:
+				- Identity-based policy: Attached to an identity: User, Role, Group
+				- Resource-based policy: Attached to a resource.
+
+
+
+	Role vs User
+	------------
+		- User: Usually represents a person or long-lived identity.
+		- Role: Usually represents temporary permissions assumed by a person, AWS service, or application.
+
+			EC2
+			 ↓
+			IAM Role
+			 ↓
+			IAM Policy
+			 ↓
+			S3 permission
+
+	Least Privilege Principle
+	-------------------------
+		- Give only the permissions that are actually required.
+
+			Bad:
+
+			Lambda
+			 ↓
+			AdministratorAccess ❌
+
+			If the Lambda only needs to read one S3 bucket, give it something like:
+
+			s3:GetObject
+			on
+			arn:aws:s3:::my-bucket/*
+
+	Explicit Deny
+	-------------
+		- An explicit Deny overrides an Allow.
+
+
+	Security group vs IAM
+	---------------------
+		- Security Group
+			→ Can network traffic reach me?
+
+		- IAM
+			→ Am I allowed to perform this AWS action?
+
+	IAM is global service
+	----------------------
+		- IAM is a global AWS service. You don't create separate IAM users per Region
+
+	MFA
+	---
+		- MFA is a simple best practice that adds an extra layer of protection on top of your user name and password. 
+
+
+3. AWS EC2 (Elastic Compute Cloud)
+==================================
+	- Amazon EC2 provides on-demand, scalable computing capacity.
+	- An EC2 instance is a virtual machine running on AWS infrastructure.
+	- Terms
+		- Instance Type: select hardware capacity (cpu, memory)
+			Eg: t3.micro, t3.medium
+
+			t3.micro - 2 vCPUs, 1 GiB RAM - general-purpose burstable instance (Suitable for Linux, SSH, basic web servers, small Spring Boot apps,)
+
+		- AMI (Amazon Macine Image): choose OS and software (linux, mac)
+			Eg: Amazon Linux, Ubuntu
+
+		- Storage: type and size of storage (eg: ebs volume)
+			- EC2 commonly uses EBS (Elastic Block Store) for persistent disk storage.
+			EC2
+			 ├── OS
+			 ├── Application
+			 └── EBS volume
+			       └── Application data
+	       - Think of EBS as the hard disk/SSD attached to your EC2 machine.
+
+		- Security Group 
+			- A Security Group is a virtual firewall attached to an EC2 instance.
+			- set up firewall, rules to control inbound/outbound traffic
+			- Security Groups are primarily stateful and control inbound/outbound traffic.
+
+			Internet
+			   |
+			   | HTTP : 80
+			   | HTTPS : 443
+			   ↓
+			Security Group
+			   |
+			   ↓
+			EC2
+
+		- Key pair: 
+			- You need a way to securely connect to the instance.
+			- For Linux EC2 instances, you commonly use SSH + key pair:
+			- ssh -i my-key.pem ec2-user@<public-ip>
+
+		virtual CPU
+		-----------
+		- A vCPU (virtual CPU) is a unit of CPU processing capacity assigned to a VM.
+		- A vCPU isn't necessarily equivalent to a dedicated physical core. Its actual relationship to hardware depends on the virtualization technology and the instance architecture.
+
+
+		EC2 pricing concept
+		-------------------
+			- EC2 follows a pay-for-usage model, but AWS provides several pricing options.
+
+			On-Demand
+				- Pay for what you use without a long-term commitment.
+				- unpredictable workloads / temporary workloads
+
+			Reserved Instances / Savings Plans
+				- Commit to usage for a longer period in exchange for lower effective cost.
+				- predictable workloads
+
+			Spot Instances
+				- Use spare AWS capacity at a potentially large discount, but AWS can reclaim the capacity.
+				- fault-tolerant, interruptible workloads
+
+		EC2 and Auto Scaling
+		--------------------
+			- AWS can automatically add/remove instances based on policies and metrics.
+			- Usually this works together with Load Balancer 
+
+		Create EC2 instance and host a static website
+		---------------------------------------------
+			- EC2 -> launch an instance
+			- Select t3.micro, Anazon linux
+			- Allow http traffic (80) - network settingss
+			- Enter User Data script when launching the instance : user-data-ec2-startup-script.sh
+			- Launch instance
+			- Open http://<EC2-Public-IP>
+
+
+
+		Access to EC2 instance
+		---------------------------
+		Using EC2 instance connect:
+			- Go to instance -> Go to connect
+			- ec2-user is already created
+			- Click on connect
+			- Check cpu, memory:
+				free -h
+				df -h
+			- cd /var/www/html. Update index.html and check if it reflects in website
+			- Note: if it is readonly file then update the permission: sudo chown ec2-user:ec2-user index.html
+
+		SSH access
+			# Locate or download your private key file
+			# your private key should be accessible only to you.
+			chmod 400 "my-web-server-key.pem"
+			ssh -i "my-web-server-key.pem" ec2-user@ec2-13-203-219-35.ap-south-1.compute.amazonaws.com
+
+		Private Key
+		-----------
+			A .pem file contains your private cryptographic key.
+			AWS uses public-key cryptography to authenticate you.
+			When you create an EC2 key pair, AWS creates two related keys:
+
+			Key Pair
+
+			Private Key                  Public Key
+			   ↓                            ↓
+			my-key.pem                  stored on EC2
+			   │
+			   └── kept by YOU
+
+		   	The private key stays with you. The public key is placed on the EC2 instance. You should never share the .pem file.
+		   	IMP: AWS does not let you download that private key again. If you lose it, you can't simply click "Download key" again and get the same private key.  
+
+
+Security Groups
+---------------
+	- An AWS Security Group (SG) is essentially a virtual firewall for your EC2 instance.
+	- It controls what network traffic is allowed to reach your EC2 instance and what traffic can leave it.
+	- You can define rules for :
+		Protocols (http, https, ssh)
+		IP Addresses (allow traffic from certain IP range)
+
+	- Inbound rules: traffic coming INTO your EC2 instance.
+
+		| Type  | Port | Source      | Purpose        |
+		| ----- | ---: | ----------- | -------------- |
+		| SSH   |   22 | My IP       | Connect to EC2 |
+		| HTTP  |   80 | `0.0.0.0/0` | Public website |
+		| HTTPS |  443 | `0.0.0.0/0` | HTTPS website  |
+
+	- Outbound rules: traffic going OUT of your EC2 instance. For example, your EC2 might need to download packages:
+	- By default, AWS generally creates a rule allowing all outbound traffic.
+
+	- Security group works at instance (aws resource) level
+		Two resource can share same security group
+
+	- Security Groups are stateful:
+		- If you allow traffic in one direction, the returning traffic in the opposite direction is automatically 
+			allowed, regardless of your inbound or outbound rules.
+		- AWS remembers that the inbound/outbound connection was allowed and permits the corresponding response traffic.
+		- In comparison Network ACL are Stateless
+
+	- Security Groups allow traffic; they don't deny it
+		- Security Groups contain allow rules.
+		- Anything that doesn't match an allowed rule is implicitly blocked.
+
+	- SSH should not be open to everyone
+		- SSH 22 0.0.0.0/0 -> bad security practice. Anyone on the internet can attempt to connect to your SSH port.
+
+	- Security groups are region specific service
+
+
+
+4. AWS Elastic Block Store (EBS)
+=================================
+	- AWS's service for providing persistent block-level storage to EC2 instances
+		EC2 = computer
+		EBS = hard disk attached to that computer
+	
+	- Usage:
+		Operating system
+		Application files
+		Logs
+		Configuration
+		Database files
+		Uploaded files
+
+	- Features:
+
+		- EBS is block storage
+			- "Block storage" means the storage behaves like a disk/drive that the operating system can format and use.
+			- like a local physical hard drive or SSD plugged into a server via a high-speed cable.
+		
+		- EBS is persistent
+			- If you stop the EC2 instance: When you start the instance again, the EBS volume can still contain your data.
+			- EC2 - stop vs terminate
+				- Stop EC2
+					EC2 → stopped
+					EBS → remains ✅
+					Data → remains ✅
+				- Terminate EC2
+					For the root volume, AWS commonly configures: DeleteOnTermination = true
+					Root EBS may be deleted
+
+		- Usually attached to one AZ Availability Zones **IMP**
+			- An EBS volume is tied to a specific Availability Zone.
+			- You generally can't directly attach an EBS volume in ap-south-1a to an EC2 instance in ap-south-1b.
+
+				Region: Mumbai
+
+				AZ-a
+				 └── EC2
+				      └── EBS ✅
+
+				AZ-b
+				 └── EC2
+				      └── cannot directly attach that EBS ❌
+
+		      - If we want to attach EBS in one AZ, to another AZ, then we can create a snapshot and then create EBS in another AZ with same snapshot
+
+
+		- EBS vs EC2 instance store
+			|                        | EBS             | Instance Store            |
+			| ---------------------- | --------------- | ------------------------- |
+			| Persistent             | ✅               | ❌                         |
+			| Survives stop          | ✅               | ❌                         |
+			| Can be used as OS disk | ✅               | ✅ on supported types      |
+			| Network-attached       | Yes             | Physically attached       |
+			| Typical use            | Persistent data | Temporary/high-speed data |
+
+		- EBS vs S3
+			- EBS is a block storage. Use it when your application needs something that behaves like a disk.
+			- S3 is a object storage
+				for things like:
+				Images
+				Videos
+				Documents
+				Backups
+				Static assets
+				Data files
+
+		- You can attach additional EBS volumes
+			- Suppose your application needs more storage. You can create another volume:
+
+		- EBS snapshot and Encryption
+			- A snapshot is essentially a point-in-time backup of an EBS volume.
+			- You can use snapshots to:
+				Back up data
+				Create new EBS volumes
+				Create AMIs
+				Recover from failures
+			- Can be encrypted
+
+	- EBS volume types
+	------------------
+		- General Purpose SSD — gp3 
+			Good for:
+			Web applications
+			Development
+			General workloads
+			Most EC2 applications
+		- Provisioned IOPS SSD — io2
+		- Throughput Optimized HDD — st1
+		- Cold HDD — sc1
+
+	- Data Lifecycle manager (DLM)
+	------------------------------
+		- AWS service that automates the backup lifecycle of EBS resources.
+		- It can automatically create, retain, and delete EBS snapshots, and it can also manage EBS-backed AMIs.
+		- You define a policy such as:
+			Create snapshot every day
+			Keep snapshots for 7 days
+			Delete older snapshots
+
+
+
+
+
+5. AWS Elastic Load Balancer (ELB)
+==================================
+	Intro:
+		- AWS service that distributes incoming traffic across multiple servers/resources.
+						 ┌── EC2 #1
+			             │
+			Users → ELB ─┼── EC2 #2
+			             │
+			             └── EC2 #3
+        - Layer 7 (Application layer) HTTP/HTTPS load balancer
+
+	Benefits:
+		- Scalability — more servers can handle more traffic.
+		- High availability — if one server fails, traffic can be sent to healthy servers. Minimal downtime
+		- A single entry point — users don't need to know the IP addresses of individual EC2 instances.
+
+	Listener and Target Group
+		- A listener waits for incoming connections on a particular port/protocol.
+			The listener can have rules such as:
+				/api/*      → Backend target group
+				/images/*   → Image target group
+
+		- A target group contains the resources that should receive traffic. For example:
+				Target Group
+				├── EC2 #1
+				├── EC2 #2
+				└── EC2 #3
+
+	Routing Decision
+		- The load balancer can make routing decisions based on things such as:
+			Target health
+			Listener rules
+			HTTP host
+			URL path
+			Ports/protocols
+
+	Health checks	
+		- One of the most important features of an ELB is health checking.
+		- Suppose:
+		 	EC2 #1 → Healthy
+			EC2 #2 → Healthy
+			EC2 #3 → ❌ Failed
+			The load balancer detects that EC2 #3 is unhealthy and stops sending traffic to it.
+
+	Types of AWS Load Balancers
+		- Application Load Balancer (ALB)
+			Designed for HTTP/HTTPS applications.
+			It works at Layer 7 (application layer).
+			route based on:
+				Host
+				Path
+				HTTP headers
+				Query parameters
+
+		- Network Load Balancer (NLB)
+			Layer 4 traffic such as TCP, UDP, and TLS.
+			It is useful when you need very high throughput or low latency and don't need HTTP-level routing.
+
+		- Gateway Load Balancer (GWLB)
+			Used for deploying and scaling network virtual appliances, such as firewalls and inspection systems.
+
+	Load Balancer and Security Groups
+		- You can use separate Security Groups:
+			ALB Security Group
+			    ↓
+			allows HTTP/HTTPS from Internet
+
+			EC2 Security Group
+			    ↓
+			allows application traffic only from ALB SG
+
+		- This means users cannot directly access port 8080 on the EC2 instances. They must come through the ALB.	
+		- That's much better than: 
+			EC2 port 8080 ← 0.0.0.0/0 ❌
+
+	Load Balancer and Auto Scaling
+		- ELB becomes especially powerful when combined with Auto Scaling.
+		- The Auto Scaling Group adjusts the number of EC2 instances, while the load balancer distributes traffic across them.
+
+	
+	Why stateless applications matter
+		- Suppose a user logs in and their session is stored only in EC2 #1's memory:
+
+			Login
+			  ↓
+			EC2 #1
+			  ↓
+			session stored in memory
+
+		- If Then the next request goes to EC2 #2:
+
+			Request
+			  ↓
+			EC2 #2
+			  ↓
+			"No session found" ❌
+
+			This creates a problem.
+
+		- A scalable architecture might instead store session/state externally:
+
+			EC2 #1 ─┐
+			EC2 #2 ─┼──→ Redis
+			EC2 #3 ─┘
+
+			or use other appropriate mechanisms.
+
+
+	ELB vs API Gateway
+		- You'll encounter both in AWS. A rough distinction:
+			ALB -> Load balancing HTTP applications
+			API Gateway -> Managed API front door
+		- API Gateway provides features such as API management, authorization integrations, throttling, and different API protocols.
+		- They solve related but different problems.
+
+	Is ALB, single point of failure?
+		- No — AWS Elastic Load Balancer is designed specifically to avoid being a single point of failure.
+		- When you create an AWS load balancer such as an ALB, AWS manages the underlying load-balancing infrastructure for you and deploys it across multiple Availability Zones. Conceptually:
+		                 
+		                 Internet
+		                    ↓
+		               ┌─────────┐
+		               │   ALB   │
+		               └────┬────┘
+		             ┌──────┴──────┐
+		             ↓             ↓
+		           AZ-a           AZ-b
+		             ↓             ↓
+		           EC2            EC2
+
+		- There isn't simply one physical load-balancer server sitting in front of your application.
+		- If infrastructure in one Availability Zone has a problem, the load balancer can continue serving through the other Availability Zone. 
+
+
+Demo: Create multiple ec2 instances and put ALB in front 
+--------------------------------------------------------
+
+	Create two EC2 instance and host a static website
+	---------------------------------------------
+		- EC2 -> launch an instance
+		- Select t3.micro, Anazon linux
+		- Allow http traffic (80) - network settingss
+		- Enter User Data script when launching the instance : user-data-ec2-startup-script.sh
+		- Summary -> Number of instances 2
+		- Launch instance
+		- Open http://<EC2-Public-IP> for both - you will see diff ip
+
+	Create LB
+	---------
+		- Load Balancers -> Create -> Application LB -> Name: server-lb
+		- Security Group -> Create -> Name: server-lb-sg, Description: Security group for lb -> Inbound rules -> Type: HTTP, Source: Anywhwere -> Create
+		- Listner and routing -> Create target group -> Name: server-lb-tg -> Next -> Add ec2 instances -> Create
+		- In target group select server-lb-tg
+		- Create LB -> Takes a few min -> Refresh it till the status becomes 'Active'
+		- Copy dns name open it in browser -> Refresh it - you will see diff IPs as request is redirected to diff ec2 instance everytime
+		- Stop one of the instance -> Then do refresh - you will see that it routes to the healthy one only now.
+		- Check resource map in load balancer - it shows how requests are routed
+		- Cleanup - delete lb, ec2 instances, target group
+
+
+
+6. Auto Scaling Group (ASG)
+===========================
+
+	- An Auto Scaling Group is an AWS service that automatically manages a group of EC2 instances. you tell AWS:
+		Minimum instances = 2
+		Desired instances = 3 (The number of instances AWS tries to maintain under normal conditions.)
+		Maximum instances = 6
+	AWS then manages that fleet for you.
+
+	- Scaling policies
+		- Average CPU > 70% -> Launch EC2
+		- Average CPU < 30% -> Terminate EC2
+
+	- What happens when an EC2 instance crashes
+		If your desired capacity is 3, the ASG can launch a replacement:
+			ASG
+			├── EC2 #1 ✅
+			├── EC2 #2 ✅
+			├── EC2 #3 ❌
+			└── EC2 #4 ✅
+		So ASG isn't only about handling traffic. It also helps with instance-level resilience.
+
+	- Launch Template:
+		A Launch Template tells AWS how a new instance should be created.
+		ASG needs another EC2
+		      ↓
+		Launch Template
+	          ↓
+			New EC2
+
+	- Example: traffic spike
+			Normal traffic is: 1,000 requests/minute and you have: 2 EC2 instances
+			Traffic suddenly becomes: 10,000 requests/minute. CloudWatch detects that CPU/request metrics have crossed your scaling threshold.
+
+			High load
+			   ↓
+			CloudWatch
+			   ↓
+			Scaling Policy
+			   ↓
+			ASG
+			   ↓
+			Launch more EC2
+
+	- ASG doesn't mean your application automatically scales perfectly
+		You can scale your EC2 layer from: 2 → 10 but if your database can't handle the increased load:
+			EC2 capacity ↑
+			        ↓
+			Database becomes bottleneck ❌
+		So Auto Scaling solves the compute scaling problem, not every scaling problem in the architecture.
+
+	- Architecture:
+
+		                 Internet
+                            ↓
+                           ALB
+                            ↓
+                      Target Group
+                            ↓
+                 ┌──────────┼──────────┐
+                 ↓          ↓          ↓
+               EC2        EC2        EC2
+                 ↑          ↑          ↑
+                 └─────── ASG ─────────┘
+                            ↓
+                   Launch Template
+
+
+
+
+
+7. Simple Storage Service (S3)
+==============================
+	- S3 is AWS's object storage service that allows you to store, manage, retrieve large amounts of data.
+	- For example, you could store:
+		images
+		videos
+		PDFs
+		backups
+		logs
+		documents
+		static website files
+		application exports
+	- rough analogy - google drive
+
+	Buckets and Objects
+	-------------------
+	- S3 doesn't behave like a normal hard disk. You store objects in buckets:
+			          S3
+                      |
+                  	Bucket
+                      |
+          ┌───────────┼───────────┐
+          ↓           ↓           ↓
+       image.jpg   report.pdf   data.json
+
+    - A bucket is a container for objects.
+	- An object is basically:
+		Object
+		├── Key (name/path)
+		├── Data/content
+		└── Metadata
+
+	Key-Value pair 
+	--------------
+		- Each object in a bucket is stored as a key-value pair. 
+		- Key is the object's name (which may contain / mimicking directory structure). Value is the content of  object
+		- S3 doesn't really have traditional directories in the same sense as Linux.
+			For example:
+				images/logo.png
+			is an object key that contains /.
+			S3 can display this as folders in the console, but conceptually they're part of the object's key.
+
+	Key Naming
+	----------
+		- Object naming: Bucket names must be unique within the applicable AWS partition and naming namespace. 
+		- An object key only needs to be unique within its bucket for a given versioning context; different buckets can contain the same key
+
+		Key prefix
+		----------
+			- A prefix is the beginning portion of an S3 object key. It is commonly used to group objects logically, similar to folders in a file system.
+			- Remember: S3 doesn't have traditional directories. The / character is simply part of the object key.
+			- Eg:  images/ is the prefix
+				my-bucket/
+					├── images/logo.png
+
+			- A prefix is just a string at the beginning of the key. It doesn't have to end with /.
+
+
+	Region Specific
+	---------------
+		- S3 is region specific (not AZ)
+		- If there are multiple zones in that region, AWS will create replicas in multiple zones
+
+	S3 and static website hosting
+	-----------------------------
+		- S3 can serve the static content.
+			S3 Bucket
+			├── index.html
+			├── style.css
+			├── app.js
+			└── logo.png
+		- For production websites, AWS services such as CloudFront are often placed in front of S3.
+
+	S3 access control
+	-----------------
+		- A very important concept is Block Public Access.
+		- By default, S3 is designed to keep your data private unless you explicitly grant access.
+		- If you open object url you will get access denied by default
+
+		Enabling public read-only access for objects in s3 bucket
+		---------------------------------------------------------
+			- Bucket -> Permissions -> Uncheck block public access 
+			- Edit bucket policy -> 
+					{
+					    "Version": "2012-10-17",
+					    "Statement": [
+					        {
+					            "Sid": "PublicReadGetObject",
+					            "Effect": "Allow",
+					            "Principal": "*", 			// means any principal, including anonymous internet users
+					            "Action": "s3:GetObject",
+					            "Resource": "arn:aws:s3:::test-bucket-04092026/*"
+					        }
+					    ]
+					}
+
+			- Go to object -> Open object url
+
+		Blocking public access
+		----------------------
+			- The four Block Public Access settings are:
+				Setting						What it protects against
+				BlockPublicAcls				New public ACLs
+				IgnorePublicAcls			Public permissions granted through ACLs
+				BlockPublicPolicy			New bucket or access point policies considered public
+				RestrictPublicBuckets		Restricts access to buckets with public policies, including certain cross-account access
+
+			- Best practice: Keep all four enabled unless you have a specific, reviewed requirement for public access.
+
+			- SAA scenario
+				A company accidentally adds a bucket policy granting public access. It wants a centralized setting that prevents the bucket from becoming public.
+				Answer: Enable S3 Block Public Access at the appropriate account or organization level.
+
+				Exam shortcut: If a question asks for the recommended way to simplify S3 permissions and ensure the bucket owner owns uploaded objects, choose S3 Object Ownership — Bucket owner enforced.
+
+
+	S3 versioning
+	--------------
+		- S3 supports Versioning - keeping multiple versions in same bucket. Conceptually:
+			report.pdf
+			├── v1
+			├── v2
+			└── v3
+		- s3-bucket -> Properties -> Bucket versioning -> enable
+		- Now if you upload files with same name, it will create versions of it
+
+	S3 encryption
+	-------------
+		- You can encrypt S3 objects at rest. Common approaches include:
+			SSE-S3
+			SSE-KMS
+		- You can also use HTTPS/TLS to protect data while it is being transmitted.
+
+
+	Scalability and Durability
+	-------------------------
+		- You don't have to think about managing disks and servers yourself.
+			Application
+			     ↓
+			    S3
+			     ↓
+			Store objects
+			Store more objects
+			Store even more objects
+
+		- Max size limit - 5 TB. An S3 object can be up to 5 TB. 
+		- For uploads larger than 5 GB, multipart upload is required.
+		- AWS handles the underlying storage infrastructure.
+		- S3 is designed for extremely high durability of stored data.  99.999999999% (11 nines) annual durability.
+
+
+	Storage Classes
+	---------------
+		- S3 offers different storage classes depending on how frequently you access your data.
+		- Pricing will be different in diff class 
+
+		| Storage Class              | Best For                      | Important Point                                   | Examples                            |
+		| -------------------------- | ----------------------------- | ------------------------------------------------- | ----------------------------------- |
+		| S3 Standard                | Frequent access               | Default; immediate access                         | Website files, active app data      |
+		| Intelligent-Tiering        | Unknown/changing access       | Automatically optimizes cost                      | User files, unpredictable workloads |
+		| Standard-IA                | Infrequent access             | Immediate access; min. 30 days                    | Backups, older reports              |
+		| One Zone-IA                | Infrequent, re-creatable data | Single AZ; cheaper; min. 30 days                  | Secondary backups, thumbnails       |
+		| Glacier Instant Retrieval  | Archive with quick access     | Millisecond retrieval; min. 90 days               | Medical images, archived media      |
+		| Glacier Flexible Retrieval | Long-term archive             | Retrieval: minutes–hours; min. 90 days            | Backup archives, compliance data    |
+		| Glacier Deep Archive       | Very long-term archive        | Lowest cost; retrieval takes hours; min. 180 days | Regulatory records, old backups     |
+
+
+	S3 vs EBS
+	---------
+		|                        | S3                           | EBS                  |
+		| ---------------------- | ---------------------------- | -------------------- |
+		| Type                   | Object storage               | Block storage        |
+		| Attached to EC2        | No                           | Yes                  |
+		| Files/objects          | ✅                           | Files via filesystem |
+		| Typical access         | API/SDK/HTTP                 | OS filesystem        |
+		| Automatically scalable | ✅                           | Volume-based         |
+		| AZ-specific            | Not in the same sense as EBS | Yes                  |
+		| Typical use            | Files, backups, assets       | EC2 disk             |
+
+
+	AWS CLI for S3
+	--------------
+
+		# list s3
+		aws s3 ls
+
+		# Upload an object to your bucket
+		aws s3 cp query-params.md s3://test-bucket-04092026
+
+		# Download an object
+		aws s3 cp s3://test-bucket-04092026/query-params.md query-params.md
+
+	S3 Replication
+	---------------
+		- feature that automatically copies objects from one S3 bucket to another S3 bucket.
+			Source bucket → automatic copy → Destination bucket
+		- This is useful for 
+			disaster recovery, 
+			compliance, 
+			lower-latency access, and 
+			maintaining copies of data in another location.
+		- Cross-Region Replication.
+			ap-south-1 (Mumbai)
+			        |
+			        | CRR
+			        ↓
+			ap-southeast-1 (Singapore)
+		- S3 replication is generally asynchronous.
+
+		CRR vs. SRR
+		-----------
+			Feature			CRR											SRR
+			Destination		Different AWS Region						Same AWS Region
+			Typical use		Geographic disaster recovery, regional 		Separate copies for compliance, log aggregation, or account separation
+							data copies	
+			Replication		Asynchronous								Asynchronous
+
+
+	AWS Snow Family
+	---------------
+		- Snow Family is a set of physical devices that AWS provides for moving or processing large amounts of data when using the internet would be too slow, expensive, or impractical.
+		- Instead of sending huge amounts of data over the internet → AWS sends you a physical device → you copy the data → send the device back to AWS.
+		- Suppose you have 500 TB of data in your company data center. Uploading it over the internet could take a very long time.
+
+		| Device        | Main Purpose                               | Important Point                              |
+		| ------------- | ------------------------------------------ | -------------------------------------------- |
+		| Snowcone      | Small data transfer / edge computing       | Smallest and portable                        |
+		| Snowball Edge | Large-scale data transfer + edge computing | Common choice for large migrations           |
+		| Snowmobile    | Extremely large data migration             | A physical truck/container for huge datasets |
+
+
+
+S3 Advanced Concepts
+====================
+
+	Lifecycle rules
+	---------------
+		- Lifecycle rules automate what happens to objects as they age. They can transition objects to cheaper storage classes or expire eligible objects.
+		- Lifecycle rules can target an entire bucket or selected prefixes and tags.
+		- Expiration of a current object in a versioned bucket may create a delete marker rather than permanently remove the older versions.
+
+		For example:
+			Day 0–30 -> S3 Standard — frequently accessed files
+			After 30 days -> Transition to S3 Standard-IA, if appropriate
+			After 90 days -> Transition to an archive storage class, if appropriate
+			After the retention period -> Expire eligible objects or versions
+
+	IAM policies vs. S3 bucket policies
+	-----------------------------------
+		- IAM policy — permissions attached to an identity
+			- An IAM policy is attached to a user, group, or role and specifies what that identity can do.
+			- This is the typical approach when an AWS application needs access to S3. Attach a role to the application rather than hardcoding access keys.
+
+		- Bucket policy — permissions attached to the bucket
+			- A bucket policy is a resource-based policy attached directly to an S3 bucket. 
+			- It specifies which principals can perform which actions on that bucket or its objects.
+			- you can use a bucket policy to:
+				- Allow a specific IAM role from another AWS account to read objects.
+				- Restrict access to requests coming through a particular VPC endpoint.
+				- Deny requests that don't use HTTPS.
+				- Allow public read access for a deliberately public website, if public access controls permit it.
+
+		- Exam tip: Cross-account access generally requires the caller's account to authorize the request and the resource-owning account to grant access. Other controls, such as SCPs, permissions boundaries, VPC endpoint policies and KMS key policies, can also affect the result.
+
+	
+	S3 Access Points
+	----------------
+		- Access points provide named endpoints with their own access point policies for accessing a shared S3 dataset.
+		- Imagine several applications share one large bucket:
+			- Analytics needs read access to analytics/.
+			- A reporting service needs read access to reports/.
+			- A data-ingestion service needs write access to incoming/.
+		- Instead of managing every application's access through one large bucket policy, you can create separate access points with appropriate policies and network controls.
+		- Access point policies work alongside the underlying bucket policy; they do not independently override it.
+		- Exam shortcut: Simplify access management for different applications sharing a dataset → S3 Access Points.
+
+	Encryption: SSE-S3 vs. SSE-KMS
+	------------------------------
+		SSE-S3
+			- Default at-rest encryption
+			- S3 manages the encryption keys.
+			- Minimal setup and no additional encryption charge.
+			- Good default for ordinary object encryption requirements.
+			- Encryption type is AES-256
+
+		SSE-KMS
+			- More key control
+			- Uses AWS KMS keys.
+			- Supports separate key permissions, auditability through KMS integrations, and additional key-management controls.
+			- KMS API requests and applicable key usage can incur additional charges.
+			- The principal accessing the object must also have the necessary KMS permissions.
+
+		DSSE-KMS
+			- Dual-layer server-side encryption using KMS keys.
+			- Consider it when a scenario explicitly requires dual-layer server-side encryption.
+
+		SSE-C
+			- The customer supplies the encryption key with the request.
+			- S3 performs server-side encryption but does not manage the customer-provided key.
+			- If you lose the key, you may lose access to the encrypted data.
+
+		Questions:
+			Requirement													Likely choice
+			Encrypt objects at rest with minimal configuration			SSE-S3
+			Control key permissions and use KMS auditing				SSE-KMS
+			Require dual-layer server-side encryption					DSSE-KMS
+			Customer must supply and manage the encryption key			SSE-C
+			Protect object data in transit								HTTPS/TLS
+
+	Versioning, delete markers, and MFA Delete
+	------------------------------------------
+		- S3 Versioning retains multiple versions of an object. What happens when objects are deleted.
+		- When you issue a normal delete request on an object in a versioning-enabled bucket, S3 typically adds a delete marker. The older versions remain stored and can be recovered if you have the appropriate permissions.
+		- To permanently delete a specific version, you must delete that version ID explicitly.
+
+	 	MFA Delete
+			- MFA Delete adds an extra authentication requirement for certain sensitive operations on a versioning-enabled bucket, including permanently deleting an object version and changing the bucket's versioning state.
+
+		Examp pointers:
+			- Versioning helps recover from accidental overwrites and deletions.
+			- MFA Delete adds protection against certain permanent deletion and versioning changes.
+			- Neither is a complete substitute for independent backups or access restrictions.
+
+	S3 Object Lock — protection against deletion
+	--------------------------------------------
+		- This is a separate feature from ordinary versioning.
+		- S3 Object Lock uses a write-once-read-many (WORM) model to prevent protected object versions from being deleted or overwritten for a specified period, or indefinitely under a legal hold. 
+		- It is useful for regulatory records, immutable backups, and ransomware-resistant retention.	
+		There are two retention modes:
+			Mode					Protection
+			Governance mode			Authorized users with the required special permission can bypass the retention protection.
+			Compliance mode			A protected version cannot be deleted or have its retention shortened during the retention period, including by the account root user.
+
+		- A legal hold can keep an object version protected until the hold is removed by an authorized user. Unlike a retention period, a legal hold has no fixed expiration date.
+
+		Key exam distinction:
+			- Versioning: Keeps prior versions, but they can still be permanently deleted by sufficiently authorized users.
+			- Object Lock: Protects object versions from deletion according to the configured retention mode or legal hold.
+
+		Scenario
+			A financial company must retain audit records for seven years, and even administrators must not be able to delete them during that period.
+			Best fit: S3 Object Lock in Compliance mode, configured with the required retention period.
+
+		- MFA Delete: force users to generate a code on a device (usually a mobile phone or hardware) before doing important operations on S3
+			• MFA will be required to:
+				• Permanently delete an object version
+				• Suspend Versioning on the bucket
+
+
+	S3 performance and large-file uploads
+	-------------------------------------
+		- S3 can handle high request rates, and its request performance scales across prefixes.
+		- S3 automatically scales to high request rates, latency 100-200 ms
+		- Your application can achieve at least 
+			3,500 PUT/COPY/POST/DELETE or
+			5,500 GET/HEAD requests per second per prefix in a bucket
+		- There are no limits to the number of prefixes in a bucket
+		- If you spread reads across all four prefixes evenly, you can achieve 22,000 requests per second for GET and HEAD
+
+		Multipart upload
+		----------------
+			- Multipart upload splits a large object into parts, uploads those parts independently, and then completes the upload to create the object.
+			- recommended for files > 100MB,
+			- must use for files > 5GB
+			- Benefits:
+				- Parts can be uploaded in parallel.
+				- Failed parts can be retried without restarting the entire upload.
+				- It is useful for large objects and unreliable network connections.
+			- If a multipart upload is abandoned, its uploaded parts can continue to incur storage charges until they are removed. Configure a lifecycle rule to abort incomplete multipart uploads.
+
+
+	Event Notifications
+	--------------------
+		- S3 can notify other AWS services when specified object events occur, such as an object being created or deleted.
+		- For example, when a user uploads an image, your application might need to generate a thumbnail automatically.
+		- S3 supports event notifications to destinations including Lambda, SQS, SNS, and EventBridge.
+
+		- Choose based on the scenario:
+			- Run code to process an uploaded file → Lambda
+			- Buffer work for asynchronous processing → SQS
+			- Fan out notifications to multiple subscribers → SNS
+			- Build flexible event routing using rules and multiple targets → EventBridge
+		- Event delivery and processing can involve retries and duplicate events. Make downstream processing idempotent rather than assuming every event arrives exactly once.
+
+	
+	CORS and Amazon S3
+	------------------
+		- CORS (Cross-Origin Resource Sharing) allows a browser-based web application hosted on one origin to make permitted requests to resources hosted on another origin. 
+		- S3 lets you configure which origins, HTTP methods, and request headers are allowed for cross-origin browser requests.
+		- An origin consists of three parts:
+			- Scheme — https
+			- Host — myapp.com
+			- Port — 443 for the default HTTPS port
+		- CORS is not authorization. It only controls which cross-origin browser requests are permitted.
+			For example, if your CORS configuration allows GET from https://myapp.com but the bucket is private and the request has no valid authorization, S3 can still return 403 Access Denied.
+
+		Why do we need CORS
+		-------------------
+			- Imagine you build a React frontend and store user images in S3.
+				React frontend : https://myapp.com
+				Amazon S3 bucket : https://myapp-files.s3.amazonaws.com
+				These are different origins because their hostnames differ.
+			- By default, browsers restrict JavaScript from reading responses from another origin unless the cross-origin request is permitted. 
+			- The request might even reach S3, but the browser will not let your JavaScript use the response if the required CORS checks fail.
+			- S3 CORS configuration lets the bucket return the appropriate headers so the browser can allow the response to be used by your frontend.
+
+		CORS working
+		------------
+			- Suppose your React application at https://myapp.com wants to upload a profile image directly to S3.
+			1. The browser sends a cross-origin request to S3, including an Origin header.
+			2. For certain requests, the browser first sends a preflight OPTIONS request to ask whether the origin, method, and headers are allowed.
+			3. S3 checks the bucket's CORS rules.
+			4. S3 returns the relevant CORS response headers if a rule matches.
+			5. The browser allows or blocks the frontend from accessing the response based on the CORS checks.
+
+			You can configure the bucket's CORS rules like this:
+
+				S3 console -> Bucket -> Permissions -> CORS
+
+				[
+				  {
+				    "AllowedOrigins": [ 		// Which website origins may make permitted cross-origin requests
+				      "https://myapp.com"
+				    ],
+				    "AllowedMethods": [ 		// Which HTTP methods are allowed, such as GET, PUT, POST, DELETE, and HEAD
+				      "GET",
+				      "PUT"
+				    ],
+				    "AllowedHeaders": [ 		// Which request headers the browser may use for requests requiring preflight
+				      "Content-Type",
+				      "Authorization"
+				    ],
+				    "ExposeHeaders": [ 			// Which response headers JavaScript may read
+				      "ETag"
+				    ],
+				    "MaxAgeSeconds": 3000 		// How long the browser may cache the preflight result
+				  }
+				]
+
+
+
+
+
+
+
+	Lifecycle Rules
+	S3 Analytics – Storage Class Analysis
+	Requester Pays
+	Event Notifications
+	Performance
+	Batch Operations
+	Storage Lens
+
+	Security
+		Encryption
+		CORS
+		MFA Delete
+		Access Logs
+		Pre-Signed URLs
+
+		Glacier Vault Lock
+		Object Lock
+		Access Points
+	 	S3 Object Lambda
+
+
+
+
+
+8. Relational Database Service (RDS)
+====================================
+
+	Intro:
+	------
+		- RDS is a managed relational database service
+		- Instead of installing and maintaining PostgreSQL/MySQL yourself on EC2, you can create an RDS
+
+	Features:
+	---------
+		- RDS manages:
+			OS management
+			Database installation
+			Scaling
+			Backups
+			Database maintenance
+			Monitoring
+			Recovery
+			High availability setup
+
+	RDS endpoint
+	------------
+		- Your application normally connects to RDS through an endpoint, not by hard-coding an instance IP.
+		- For example: mydb.xxxxx.ap-south-1.rds.amazonaws.com
+		- This also helps during failover because AWS can manage the underlying infrastructure.
+
+	RDS Multi-AZ
+	------------
+		- Suppose your database is running in Availability Zone A:
+				AZ-a
+				└── RDS Primary
+			
+			With Multi-AZ, AWS maintains a standby in another AZ:
+
+			             RDS
+			          /       \
+			       AZ-a       AZ-b
+			        ↓           ↓
+			     Primary      Standby
+
+		- If the primary database has a failure, AWS can perform a failover to the standby. The application continues connecting through the RDS endpoint.
+		- Multi-AZ is primarily about high availability/failover, not read scaling.
+
+	Read Replicas
+	-------------
+		- If your application has lots of read traffic, you can use Read Replicas for - Scaling read-heavy workloads
+			            RDS
+		                 |
+		       ┌─────────┴─────────┐
+		       ↓                   ↓
+		   Primary             Read Replica
+		  (writes)               (reads)
+
+	
+	Multi-AZ vs Read Replica
+	------------------------
+		| Feature              | Multi-AZ                      | Read Replica            |
+		| -------------------- | ----------------------------- | ----------------------- |
+		| Main purpose         | High availability             | Read scaling            |
+		| Handles failure      | ✅                             | Not its primary purpose |
+		| Read traffic scaling | ❌                             | ✅                     |
+		| Replication          | Typically synchronous standby | Asynchronous            |
+		| Application reads    | Normally primary              | Can read from replica   |
+
+	Automated backups
+	-----------------
+		- RDS can automatically create backups of your database.
+		- Point-in-time recovery : if something goes wrong at 3 PM, you can restore the database to an appropriate point 
+			in time within the available backup retention period.
+
+	RDS Snapshots
+	-------------
+		- You can also manually create an RDS snapshot.
+		- Snapshots can be used to restore a database or create another database instance from the snapshot.
+
+	Security
+	--------
+		- RDS is normally placed inside a VPC.
+		- You control network access using Security Groups.
+
+		A good production design is:
+
+			Internet
+			   ↓
+			ALB
+			   ↓
+			Application EC2
+			   ↓
+			Private RDS
+
+		rather than:
+
+			Internet
+			   ↓
+			RDS ❌
+
+	RDS is not serverless
+	---------------------
+		- If AWS manages RDS, does that mean it's serverless?" No.
+		- Traditional RDS still involves a database instance with allocated compute and storage.
+		- You choose things such as:
+			DB instance class
+			Storage
+			Engine
+		- There is also Amazon Aurora Serverless, which is a different concept.
+
+	Typical Architecture
+	--------------------
+	            Internet
+	               ↓
+	              ALB
+	               ↓
+	          Spring Boot
+	           EC2 / ECS
+	               ↓
+	         ┌─────┴─────┐
+	         ↓           ↓
+	        RDS          S3
+	    PostgreSQL      Files
+
+	    Structured relational data → RDS
+		Files/objects → S3
+
+
+	Demo fullstack: NodeJS (EC2) + MySQL (RDS)
+
+	Connecting with RDS
+	-------------------
+		- We can use mysql/postgres client and connect by providing hostname and username/password
+
+
+
+
+9. AWS Aurora
+=============
+	- Fully managed relational database engine built by AWS. 
+	- It is compatible with MySQL and PostgreSQL, so applications using those databases can often work with Aurora with minimal changes.
+		Aurora
+		├── Aurora MySQL-Compatible
+		└── Aurora PostgreSQL-Compatible
+	- Aurora often makes more sense when you need higher scale, availability, and AWS-managed database capabilities and are 
+		willing to pay more than a standard RDS engine.
+
+	Distributed storage
+	-------------------
+		- Aurora's storage is automatically replicated across multiple Availability Zones.
+		             Aurora Cluster
+		                   |
+		        ┌──────────┼──────────┐
+		        ↓          ↓          ↓
+		      AZ-a       AZ-b       AZ-c
+		       |           |           |
+		     Storage     Storage     Storage
+		        \           |          /
+		         └──── Distributed ───┘
+		                 storage
+
+		 - You don't manually manage these storage replicas like traditional database disks.
+
+	Aurora Cluster : Reader + Writer
+	--------------------------------
+		- An Aurora database usually consists of a cluster.
+			Aurora Cluster
+			├── Writer instance
+			├── Reader instance
+			└── Reader instance
+		- The reader instances can be used to handle read traffic.
+
+	Aurora vs RDS Multi-AZ
+	----------------------
+		- A traditional RDS Multi-AZ setup is primarily:
+			Primary
+			   ↓
+			Standby
+		- The standby is there mainly for failover, not for serving normal read traffic.
+		- Aurora commonly has:
+			Writer
+			   +
+			Readers
+		- Readers can serve read traffic.
+
+		|                            | RDS Multi-AZ         | Aurora                          |
+		| -------------------------- | -------------------- | ------------------------------- |
+		| Main purpose               | HA/failover          | HA + performance/scalability    |
+		| Read replicas              | Separate feature     | Built into cluster architecture |
+		| Shared distributed storage | No                   | Yes                             |
+		| Multi-AZ storage           | ✅                    | ✅                               |
+		| Read scaling               | Limited with standby | ✅ Readers                       |
+
+
+	Aurora Auto Scaling
+	-------------------
+		- Aurora can automatically add/remove Aurora Replicas based on read demand using Auto Scaling policies.
+			Normal:
+			Writer + 1 Reader
+
+			High read traffic:
+			Writer + 3 Readers
+
+
+
+
+
+10. Amazon DynamoDB
+==================
+
+	Intro:
+	------
+		- AWS's fully managed NoSQL database service. NoSQL key-value/document database
+		- It is designed for applications that need very fast, predictable performance and massive horizontal scalability 
+			without managing database servers.
+
+	RDS vs DynamoDB
+	---------------
+
+		| RDS / Aurora                                 | DynamoDB                          |
+		| -------------------------------------------- | --------------------------------- |
+		| Relational                                   | NoSQL                             |
+		| SQL                                          | Key-value / Document              |
+		| Tables + rows                                | Items                             |
+		| Fixed/schema-based design                    | Flexible attributes               |
+		| Joins supported                              | No traditional joins              |
+		| Scale vertically + replicas                  | Designed for horizontal scaling   |
+		| You manage DB design around relational model | You design around access patterns |
+
+	DynamoDB: Table-based NoSQL database
+	------------------------------------
+		-   DynamoDB
+			   ↓
+			Table
+			   ↓
+			Items
+			   ↓
+			Attributes	
+
+	Primary Key
+	-----------
+		- Every DynamoDB table needs a primary key. Two types of primary keys:
+		- Simple primary key
+			- A single partition key:
+		- Composite primary key
+			- Partition Key + Sort Key
+			Eg: PK: userId SK: orderId
+
+	Partition Key
+	-------------
+		- The partition key determines how DynamoDB distributes data across its underlying partitions.
+		- DynamoDB uses the partition-key value to determine where that item is stored.
+		- A good partition key distributes traffic and data well.
+
+			        DynamoDB
+		                |
+		       ┌────────┼────────┐
+		       ↓        ↓        ↓
+		   Partition  Partition Partition
+		       1          2        3
+
+
+
+	Design
+	------
+		- With DynamoDB, you generally start by asking: What queries does my application need?
+		- Then you design the table's keys around those access patterns.
+		- This is one of the biggest mindset changes from RDS to DynamoDB.
+		- SQL thinking
+			Design database
+			      ↓
+			Write queries
+		- DynamoDB (NoSQL) thinking
+			Identify access patterns
+			      ↓
+			Design keys/indexes
+			      ↓
+			Build table
+
+	DynamoDB is very fast
+	---------------------
+		- single-digit millisecond performance at scale for many common access patterns.
+		- articularly useful when you need:
+			Very high request volume
+			Predictable low latency
+			Horizontal scalability
+			Simple key-based access
+
+	Scales horizontally
+	-------------------
+		-  AWS handles the underlying infrastructure and partitioning.
+
+					DynamoDB
+                       ↓
+             ┌─────────┼─────────┐
+             ↓         ↓         ↓
+         Partition  Partition  Partition
+
+ 	Global Tables
+ 	-------------
+ 		- DynamoDB supports Global Tables for multi-Region applications.
+ 		             Application
+		             /         \
+		            ↓           ↓
+		        Mumbai       Singapore
+		           ↓             ↓
+		      DynamoDB       DynamoDB
+
+      	- Data can be replicated across Regions. This is useful for:
+			Global applications
+			Multi-Region availability
+			Lower latency for users in different geographies
+
+    Capacity modes
+    --------------
+     	- On-Demand: You pay for actual requests.
+			Good when:
+				Traffic is unpredictable
+				You don't want to manage capacity
+				Workload is intermittent
+		- Provisioned
+			- You specify expected read/write capacity.
+			- Useful when traffic is predictable.
+
+	DynamoDB is serverless
+	----------------------
+		- AWS manages the underlying infrastructure. Conceptually:
+			Your Application
+			       ↓
+			DynamoDB API
+			       ↓
+			AWS managed infrastructure
+		- While creating dynamodb, you dont pick os-type, cpu, memory etc.. 
+
+	DynamoDB Streams
+	----------------
+		- DynamoDB can capture changes to items using DynamoDB Streams.
+		- For example:
+			Item updated
+			     ↓
+			DynamoDB
+			     ↓
+			DynamoDB Stream
+			     ↓
+			Lambda
+
+		- Suppose an order status changes: CREATED → PAID
+		- A Lambda function can react to the change.
+		- This is useful for event-driven architectures.
+
+	TTL
+	---
+		- DynamoDB supports Time to Live (TTL).
+
+
+	Query vs Scan
+	-------------
+		- Query
+			→ uses key
+			→ efficient
+		- Scan
+			→ examines table items
+			→ generally more expensive
+
+	Demo
+	----
+		- DynamoDB -> Create table -> put table-name and partition-key as id
+		- Goto table -> Explore items 
+
+		CLI:
+
+		# List tables
+		aws dynamodb list-tables
+
+		# Put item
+		aws dynamodb put-item \
+		  --table-name Users \
+		  --item '{
+		    "id": {"S": "101"},
+		    "name": {"S": "Sourabh"},
+		    "email": {"S": "sourabh@example.com"},
+		    "age": {"N": "32"}
+		  }'
+
+		# DynamoDB data types
+			S = String
+			N = Number
+			BOOL = Boolean
+
+		# Scan
+		aws dynamodb scan --table-name Users
+
+		# Get Item
+		aws dynamodb get-item \
+		  --table-name Users \
+		  --key '{"id":{"S":"101"}}'
+
+
+
+
+
+
+
+11. Amazon Lambda
+================
+
+	Intro:
+	------
+		- AWS Lambda is a serverless compute service that runs your code without you managing servers.
+		- EC2 vs Lambda
+
+			With EC2:
+
+				You
+				 ↓
+				EC2
+				 ↓
+				Install Java
+				 ↓
+				Deploy application
+				 ↓
+				Manage OS / server
+
+			With Lambda:
+
+				Event
+				  ↓
+				Lambda
+				  ↓
+				Your code executes
+				  ↓
+				Result
+
+		- Serverless does NOT mean there are no servers. There are servers underneath, but AWS manages them for you.
+		- You focus on:
+				Your code
+				   ↓
+				Lambda
+
+			AWS handles things such as:
+				Servers
+				OS
+				Infrastructure
+				Capacity
+				Scaling
+
+		- Lambda supports several runtimes: Java, Python, NodeJS
+
+	Lambda is event-driven
+	----------------------
+		- A Lambda function usually runs because something triggers it. Eg:
+				API request
+				   ↓
+				Lambda
+
+			or:
+				S3 file uploaded
+				   ↓
+				Lambda
+
+			or:
+				SQS message
+				   ↓
+				Lambda
+
+		- Simple example: Suppose a user uploads an image to S3.
+				User
+				 ↓
+				S3
+				 ↓
+				Object Created Event
+				 ↓
+				Lambda
+				 ↓
+				Resize image
+
+			Your Lambda could contain code like:
+
+				public void handleRequest(...) {
+				    // Read image from S3
+				    // Resize image
+				    // Upload resized image
+				}
+
+			You don't need to run a continuously running Java server for this task.
+
+	Suitable for short-lived tasks
+	------------------------------
+		- Eg:
+			Process uploaded file : Lambda automatically resizesl compress or even apply filters
+			Send notification: New user signs up, lambda triggers sms, email
+			Validate an API request
+			Transform data : You need to clean up or process data before storing it in a db
+			Process queue messages
+			Run scheduled jobs
+			Create thumbnails
+		- Lambda has a maximum execution duration of 15 minutes per invocation.
+
+	Lambda automatically scales
+	---------------------------
+		- AWS automatically manages the underlying compute capacity.
+		- You don't have to manually launch:
+			EC2 #1
+			EC2 #2
+			EC2 #3
+			...
+			EC2 #100
+		- This makes Lambda very attractive for workloads with variable traffic.
+
+	Lambda can be triggered on a schedule
+	-------------------------------------
+		Cleanup jobs
+		Reports
+		Scheduled processing
+		Maintenance tasks
+
+	Lambda and cold starts
+	----------------------
+		- Suppose the function hasn't been used recently.
+
+			A request arrives:
+
+			Request
+			  ↓
+			Create execution environment
+			  ↓
+			Initialize runtime
+			  ↓
+			Run function
+
+		- That initialization can add latency.
+		- This is called a cold start.
+
+	Lambda is stateless
+	-------------------
+		- The execution environment isn't something you should rely on for persistent application state. Instead, use external services:
+			Lambda
+			 ├── DynamoDB → application data
+			 ├── S3       → objects
+			 └── SQS      → messages
+		- This is similar to the stateless design principles
+
+	Lambda pricing
+	--------------
+		- A major benefit is that you're primarily paying based on usage, including requests and compute duration, 
+			rather than paying for a continuously running server as you do with EC2.
+		- So a workload that runs occasionally can be economical with Lambda.
+
+
+
+
+
+12. AWS CloudFormation IAC
+==========================
+
+	Intro:
+	------
+		- AWS CloudFormation is an AWS service used to implement Infrastructure as Code (IaC).
+		- Instead of manually creating AWS resources in the console, you describe your infrastructure in a 
+			template, and CloudFormation creates and manages those resources for you.
+
+			CloudFormation Template
+			        ↓
+			CloudFormation
+			        ↓
+			┌───────┬───────┬───────┬───────┐
+			 VPC    EC2     S3      RDS
+
+		- Infrastructure as Code = managing infrastructure using code/configuration files.
+		- Template is typically written in: YAML or JSON
+
+		Eg: You can describe multiple AWS resources in one template.
+
+			AWSTemplateFormatVersion: '2010-09-09'
+
+			Resources:
+
+			  MyBucket:
+			    Type: AWS::S3::Bucket
+
+			  MySecurityGroup:
+			    Type: AWS::EC2::SecurityGroup
+			    Properties:
+			      GroupDescription: Allow HTTP
+
+			  MyInstance:
+			    Type: AWS::EC2::Instance
+			    Properties:
+			      InstanceType: t3.micro
+
+  	CloudFormation Resources
+  	------------------------
+  		- Every resource has a CloudFormation type. Examples:
+			AWS::EC2::Instance
+			AWS::S3::Bucket
+			AWS::RDS::DBInstance
+			AWS::Lambda::Function
+			AWS::DynamoDB::Table
+
+
+	CloudFormation Stack
+	--------------------
+		- A Stack is the single management unit containing all resources created by a template.  
+		- When you deploy a template, CloudFormation creates a Stack.  
+		- The stack manages those resources as a group.
+			MyApplicationStack
+			├── VPC
+			├── Security Group
+			├── EC2
+			├── S3
+			└── RDS
+
+			Template = definition
+			Stack = deployed instance of that definition
+
+		- If you update the template, the Stack updates. If you delete the Stack, CloudFormation cleanly deletes all associated resources created by that template. 
+
+	Drift Detection
+	----------------
+		- Identifies if resources have been manually edited outside of CloudFormation (e.g., if someone changed a security 
+			group manually in the AWS Console) so you can bring them back into alignment.
+
+
+	Benefits
+	--------
+		- Repeatability: You can create the same infrastructure multiple times. In diff environments: dev, test, prod
+		- Version control: You can put your CloudFormation template in Git
+		- Automation: CloudFormation can create resources automatically.
+		- CloudFormation manages dependencies: Suppose your application needs:
+				VPC
+				 ↓
+				Subnet
+				 ↓
+				EC2
+			- CloudFormation understands resource relationships and can determine the appropriate creation order.
+			- Similarly, when resources are removed, it can handle dependencies appropriately.
+
+
+
+
+
+
+13. AWS Route 53
+================
+
+	Intro:
+	------
+		- AWS's managed DNS service.
+		- Route 53 translates domain names into the locations of your application.
+		- The name comes from port 53, the standard port used by DNS
+
+	DNS Recap
+	---------
+		- When you enter: https://www.google.com. The flow is roughly:
+
+		Browser
+		   │
+		   │ 1. Browser DNS cache
+		   ▼
+		OS / Local DNS cache
+		   │
+		   │ 2. If not found
+		   ▼
+		Recursive DNS Resolver cache (ISP or Google or Cloudflare)
+		   │
+		   │ 3. If resolver doesn't have cached answer
+		   ▼
+		Root DNS Server (Points to TLD servers. I don't know the IP for www.google.com, but I know who handles .com)
+		   │
+		   │ "Who handles .com?" 
+		   ▼
+		.com TLD DNS Server (Points to authoritative nameservers. I don't know the IP for www.google.com, but I know which ANS handle google.com)
+		   │
+		   │ "Who is authoritative for google.com?"
+		   ▼
+		Authoritative DNS Server           <--------- ROUTE 53 comes here
+		   │
+		   │ "www.google.com → IP address"
+		   ▼
+		Recursive Resolver
+		   │
+		   ▼
+		OS / Browser
+		   │
+		   ▼
+		Browser connects to IP
+
+
+	Route 53 and DNS hosting
+	------------------------
+		- suppose you own: myapp.com and want: www.myapp.com → your AWS load balancer
+		- Route 53 can provide the authoritative DNS servers for your domain.
+		- When you create a Route 53 hosted zone for myapp.com, AWS gives you a set of authoritative nameservers, such as:
+			ns-123.awsdns-45.com
+			ns-678.awsdns-90.net
+		- You configure your domain's delegation at the registrar so that the .com TLD knows:
+			"For myapp.com, ask these Route 53 nameservers."
+
+			Root
+			  ↓
+			.com TLD
+			  ↓
+			Route 53
+			  ↓
+			www.myapp.com → ALB / CloudFront / EC2 / etc.
+
+
+	Features
+	--------
+		- Route 53 is more than just DNS
+		- Route 53 provides:
+			Domain registration — buy/manage domains.
+			DNS hosting — authoritative DNS using hosted zones.
+			Health checks — determine whether endpoints are healthy. Used for failover routing
+			Routing policies — decide which endpoint DNS should return. Eg:
+
+				www.myapp.com
+				   ↓
+				Route 53
+			       │
+			       ├── India users → Mumbai server
+			       │
+			       └── US users    → Virginia server
+
+	       Load balancing
+	       Multi-region deployment: Route traffic to the closest region
+
+
+	Route 53 Hosted Zone
+	--------------------
+		- A Hosted Zone contains the DNS records for a domain.
+			For example: Hosted Zone: example.com
+				Records:
+				├── www.example.com
+				├── api.example.com
+				├── mail.example.com
+				└── ...
+
+		- two main types.
+			- Public Hosted Zone: Used for domains accessible from the public internet.
+			- Private Hosted Zone: Used for DNS resolution inside a VPC. This is useful for internal service discovery.
+
+	DNS Records
+	-----------
+		- A Route 53 hosted zone contains DNS records.
+		- A record Maps a domain to an IPv4 address.
+			- AAAA record: Maps a domain to an IPv6 address.
+			- CNAME : Maps one domain name to another domain name. www.example.com -> app.example.com
+			- Alias: An Alias record lets you point a domain to AWS resources such as:
+					ALB
+					CloudFront
+					S3 website endpoint
+					API Gateway
+
+				Eg:
+					api.example.com
+					       ↓
+					Route 53 Alias
+					       ↓
+						  ALB
+
+				For AWS resources, Alias is generally preferred over CNAME when supported.
+
+	Route 53 + ALB
+	---------------
+		- Suppose your ALB has a DNS name: my-alb-123.ap-south-1.elb.amazonaws.com
+		- You don't want users to remember that. You can create:
+			api.example.com
+			       ↓
+			Route 53 Alias
+			       ↓
+				ALB
+			       ↓
+			EC2 instances
+
+		- common architecture is:
+			Route 53
+			   ↓
+			  ALB
+			   ↓
+			EC2 / ECS / EKS
+
+	Routing policies
+	----------------
+		- Route 53 can choose where to send users based on different policies.
+		- Simple routing - One destination: example.com -> ALB
+		- Weighted routing: ALB A → 90%, ALB B → 10% (Useful for canary deployments or gradual migrations.)
+		- Latency-based routing: Route users to the AWS Region that provides the lowest network latency. Useful for global applications.
+			India user
+			   ↓
+			Mumbai
+
+			US user
+			   ↓
+			Virginia
+
+	DNS TTL
+	-------
+		- The TTL controls how long the DNS response can be cached.
+		- With: TTL = 300 seconds DNS resolvers can cache that answer for about 5 minutes.
+		- if you change: api.example.com → New ALB the change may not be immediately visible everywhere because of caching.
+
+	Domain registration
+	-------------------
+		- Route 53 can also be used as a domain registrar. You can register a domain such as: mycompany.com
+		- Domain registration and DNS hosting are related but separate concepts.
+		- You can register a domain elsewhere and still use Route 53 for DNS.
+
+
+	Demo
+	----
+		Register domain name
+		--------------------
+			- Such as hostinger (myexamplewebsite.xyz)
+
+
+		Creating hosted zone
+		--------------------
+			- If you register domain-name, the hosted zone is automatically created
+			- If you register from somewhere else, such as hostinger, you have to create hosted zone
+			- Route 53 -> Hosted zone -> Create
+			 	- Enter domain name (that you registered in hostinger)
+			 	- Type public
+			- If you click on the hosted zone, you will see two entries: NS and SOA 
+			- click on NS -> you will see a list of nameservers
+
+		Registering NS on hosting provider 
+		----------------------------------
+			- Go to hostinger -> Edit DNS/Nameservers -> Add aws nameservers
+			- This tells hostinger to redirect requests to for this domain, to our aws nameservers
+
+		Create DNS Record 
+		-----------------
+			- Inside hosted zone -> Create record
+				Record name: www
+				Record type: Route traffic to ipv4
+				Enter public IP of ec2 instance
+				Routing Policy : simple routing
+				Crete Record
+
+		Test 
+		----
+			- Go to www.myexamplewebsite.xyz
+
+
+		Advanced
+		--------
+			- Routing policies: Set up routing policy based on your need: latency based, failover routing
+			- Health checks: Configure health checks to monitor endpoint and trigger failover when needed
+
+
+
+14. AWS CloudFront CDN
+======================
+
+	Intro:
+	------
+		- AWS's Content Delivery Network (CDN).
+		- Cache content closer to users so they can access it faster.
+		- CloudFront is especially useful for static assets.	
+
+	Edge Location
+	-------------
+		- CloudFront has a large global network of edge locations. Conceptually:
+	                 CloudFront
+	              /      |       \
+	             ↓       ↓        ↓
+	          India    Europe     US
+	         Edge      Edge       Edge
+	         Location  Location   Location
+
+		- Users are generally directed to an appropriate CloudFront edge location.
+		- The edge location caches content from your origin according to your CloudFront configuration.
+
+
+	Origin
+	------
+		- The origin is where CloudFront gets the original content.
+		- CloudFront + S3 : This is a very common AWS architecture:
+			User
+			 ↓
+			CloudFront
+			 ↓
+			S3
+
+	Cache TTL
+	---------
+		- CloudFront may serve the cached version for that period before it needs to revalidate/fetch according to the configured behavior.
+		- This creates a tradeoff:
+			Long TTL
+			→ Better caching
+			→ Fewer origin requests
+			→ But changes may take longer to appear
+
+			Short TTL
+			→ Faster propagation of changes
+			→ More origin requests
+
+	Cache invalidation
+	------------------
+		- You can issue a CloudFront invalidation to remove cached objects. For example:
+			Invalidate:
+			/index.html
+			/app.js
+			/images/*
+		- Then CloudFront fetches the updated content from the origin when requested.
+
+	CloudFront distribution
+	-----------------------
+		- To use CloudFront, you create a Distribution.
+			Conceptually:
+
+			CloudFront Distribution
+			├── Origin
+			├── Cache behavior
+			├── Viewer protocol policy
+			├── Cache policy
+			└── Other settings
+
+		- You can configure different behaviors for different paths. For example:
+
+				/static/*
+				    ↓
+					S3
+
+				/api/*
+				    ↓
+					ALB
+
+		- That means one CloudFront distribution can route different types of requests to different origins.
+
+	Architecture
+	------------
+		         User
+                  ↓
+              Route 53
+                  ↓
+             CloudFront
+             /         \
+            ↓           ↓
+          S3           ALB
+       Frontend      Backend API
+                        ↓
+                     EC2/EKS
+                        ↓
+                       RDS
+
+
+
+
+15. AWS Virtual Private Cloud (VPC)
+===================================
+
+	Intro:
+	------
+		- Amazon VPC (Virtual Private Cloud) is your private network inside AWS.
+		- VPC = your own network in AWS, where you decide how your AWS resources communicate with each other and with the internet.
+		- You are drawing a virtual fence around a slice of AWS infrastructure. Nothing inside your VPC can talk to the outside world, 
+			and no one from the outside world can get in, unless you explicitly set up pathways and rules to allow it. 
+		- It gives you a private space to deploy your servers (EC2 instances) and databases safely.
+		- It is similar to creating your own network inside a data center.
+		- When you create a VPC, you define its IP address range
+
+			AWS Region
+			└── VPC
+			    ├── Subnet
+			    │   └── EC2
+			    ├── Subnet
+			    │   └── EC2
+			    └── Subnet
+			        └── RDS
+
+	Why do we need a VPC?
+	---------------------
+		- To securely isolate and control network environments. You don't want every resource to be directly exposed to the public internet.
+		- You want a network like:
+
+			Internet
+			   ↓
+			  ALB
+			   ↓
+			Private application servers
+			   ↓
+			Private database
+
+		- VPC provides the networking foundation for this.
+
+
+	VPC is Region-specific
+	----------------------
+		- A VPC belongs to an AWS Region. For example:
+			ap-south-1 (Mumbai)
+			└── VPC
+		- The VPC itself spans the Region, while its subnets exist inside individual Availability Zones.
+
+			Region: ap-south-1
+			│
+			├── AZ-a
+			│   └── Subnet 								VPC = Regional
+			│ 											Subnet = AZ-specific
+			├── AZ-b
+			│   └── Subnet
+			│
+			└── AZ-c
+			    └── Subnet
+
+	CIDR block
+	----------
+		- When you create a VPC, you define its IP address range, using CIDR notation. For example:
+			10.0.0.0/16
+
+		- This gives your VPC a range of private IP addresses.
+		- You then divide that range into subnets.
+
+			For example:
+
+			VPC: 10.0.0.0/16
+
+			├── Public subnet
+			│   10.0.1.0/24
+			│
+			├── Private subnet
+			│   10.0.2.0/24
+			│
+			└── Private subnet
+			    10.0.3.0/24
+
+	What is a subnet?
+	-----------------
+		- A subnet is a smaller IP range inside a VPC.
+
+			VPC 10.0.0.0/16
+			     ↓
+			┌──────────────┬───────────────┐
+			│ Public       │ Private       │
+			│ subnet       │ subnet        │
+			│ 10.0.1.0/24  │ 10.0.2.0/24   │
+			└──────────────┴───────────────┘
+
+		- You place AWS resources into subnets. For example:
+
+			Public subnet
+			└── ALB
+
+			Private subnet
+			└── EC2
+
+			Private subnet
+			└── RDS
+
+		- Subnet is created in availability zone (AZ)
+
+	
+	Public vs Private Subnet
+	------------------------
+		- Public subnet : 
+			- Connected to the internet. Resources here (like a web server or load balancer) can send and receive traffic 
+				from the public web.
+			- Only the components that need internet exposure go into the public part.
+			- A subnet is considered public when its route table has a route to an Internet Gateway.
+
+				Public subnet
+				      ↓
+				Internet Gateway
+				      ↓
+				Internet
+
+			Typically:
+				ALB
+				Bastion host
+				Public-facing resources
+
+		- Private subnet
+			- Hidden from the internet. Resources here (like backend databases or internal microservices) handle sensitive 
+				data and can only be reached internally. 
+			- A private subnet doesn't have a direct route to the internet through an Internet Gateway.
+
+				Private subnet
+				      ↓
+				No direct internet route
+
+			Typically:
+				Application servers
+				Databases
+				Internal services
+
+	
+	Internet Gateway (IGW)
+	----------------------
+		- An Internet Gateway (IGW) connects your VPC to the public internet.
+				Internet
+				    ↕
+				Internet Gateway
+				    ↕
+				VPC
+		- It is attached to a VPC
+
+		- A common public subnet route table contains:
+
+				0.0.0.0/0 → Internet Gateway
+
+		- This means Traffic to destinations outside the VPC can go through the Internet Gateway.
+		- But just having an Internet Gateway doesn't automatically make an EC2 instance publicly accessible. 
+			Other things, such as route tables, a public IP, and Security Groups, also matter.
+
+
+	Route Table
+	-----------
+		- A route table tells AWS where network traffic should go.
+
+			For example:
+
+			Destination       Target
+			10.0.0.0/16       local
+			0.0.0.0/0         Internet Gateway
+
+		- Route is associated with subnet. 
+
+		- Meaning:
+
+			Traffic within VPC
+			    ↓
+			local
+
+			Everything else
+			    ↓
+			Internet Gateway
+
+		- For a private subnet, you might have:
+
+			Destination       Target
+			10.0.0.0/16       local
+			0.0.0.0/0         NAT Gateway
+
+	NAT Gateway
+	-----------
+		- Enables instances in a private subnet to connect to the internet or other AWS services, but 
+			prevents internet from initiating connection to those instances
+		- Suppose an EC2 instance is in a private subnet. It might need to download software:
+
+			Private EC2
+			   ↓
+			Internet
+
+		- You don't want the internet to initiate connections directly to that EC2.
+		- A NAT Gateway lets private resources initiate outbound internet connections.
+
+			Private EC2
+			    ↓
+			NAT Gateway
+			    ↓
+			Internet
+
+		- But generally:
+
+			Internet
+			   X
+			Private EC2
+
+	Security Group
+	--------------
+		- A Security Group is a virtual firewall associated with a network interface. For example:
+
+			EC2 Security Group
+
+			Inbound:
+			8080 ← ALB Security Group
+
+		- The VPC provides the network; the Security Group controls permitted traffic to the resource.
+
+
+	Network ACL
+	-----------
+		- A Network ACL (NACL) is another security layer, but at the subnet level. 
+		- Optional layer of security for your VPC that acts as a firewall for controlling traffic in and out of one or more subnets
+		- Contains Allow or Deny rules (Security group only provides Allow rule). Security group only allows allow rule. 
+		- Mental model:
+
+			VPC
+			 ↓
+			Subnet
+			 ↓
+			NACL
+			 ↓
+			EC2
+			 ↓
+			Security Group
+
+		- Security group works at instance level, Network ACL works at subnet level. 
+
+
+	Default VPC
+	-----------
+		- A Default VPC is a VPC that AWS automatically creates for you in each AWS Region (for eligible accounts) so you can start launching resources without designing a VPC from scratch.
+		- For example, when you launch an EC2 instance and don't explicitly select a custom VPC, AWS may place it in the default VPC.
+		- WS gives you a ready-to-use network.
+
+		What does a Default VPC contain?
+		--------------------------------
+			AWS creates several networking components for you.
+
+			Conceptually:
+
+			Default VPC
+			│
+			├── Public Subnet (in AZ-a)
+			├── Public Subnet (in AZ-b)
+			├── Public Subnet (in AZ-c)
+			│
+			├── Route Tables
+			├── Internet Gateway
+			└── Default Security Group
+
+		Is Default VPC insecure?
+		------------------------
+			- The mistake would be thinking: "Everything in the Default VPC is public."
+			- 
+
+
+	VPC Peering
+	-----------
+		- VPC Peering = connect two VPCs so resources in them can communicate using private IP addresses.
+		- VPC Peering is a private network connection between two VPCs.
+		- An EC2 instance in VPC A can communicate with an EC2 instance in VPC B using private IPs, assuming the 
+			appropriate routing and security rules are configured.
+
+			VPC A
+			10.0.0.0/16
+			   |
+			   | VPC Peering
+			   |
+			VPC B
+			10.1.0.0/16
+
+		Purpose
+		-------
+			- Suppose you have two environments:
+
+				VPC A                         VPC B
+				Production                   Shared Services
+				    ↓                             ↓
+				EC2                           Database
+
+			- You want the production application to access the shared database privately:
+
+				EC2 (VPC A)
+				      ↓
+				VPC Peering
+				      ↓
+				Database (VPC B)
+
+			- The traffic doesn't need to go over the public internet.
+			- You need to configure route tables in both VPCs. Then you also need the relevant Security Groups/NACLs to allow the traffic.
+
+			- So the flow is:
+
+				EC2 in VPC A
+				    ↓
+				Route Table
+				    ↓
+				VPC Peering
+				    ↓
+				Route Table
+				    ↓
+				EC2 in VPC B
+		
+		CIDR ranges cannot overlap
+		---------------------------
+			- You generally cannot peer:
+
+				VPC A: 10.0.0.0/16
+				VPC B: 10.0.0.0/16
+
+				because their address ranges overlap.
+
+				Instead:
+
+				VPC A: 10.0.0.0/16
+				VPC B: 10.1.0.0/16
+
+				is valid.
+
+		VPC Peering can be cross-Region
+		-------------------------------
+			- For example:
+
+				Mumbai VPC
+				10.0.0.0/16
+				      |
+				      | Peering
+				      ↓
+				Singapore VPC
+				10.1.0.0/16
+
+				This is called inter-Region VPC peering.
+
+
+		VPC Peering is not transitive
+		-----------------------------
+			- VPC A ←→ VPC B ←→ VPC C
+			- You might think: A → B → C would allow A to communicate with C.
+			- It does not. VPC peering connections are not transitive.
+
+
+
+	VPC Endpoints
+	-------------
+		- A VPC Endpoint lets resources inside your VPC access AWS services privately, without sending the traffic through the public internet.
+		- VPC Endpoint = private connection from your VPC to an AWS service.
+
+
+	Bastion Host
+	------------
+		- A Bastion Host is a specially configured server used as a secure entry point to access servers in a private subnet.
+		- Bastion Host = jump server used to reach private EC2 instances.
+		- Your application EC2 instances don't have public IPs, so you can't SSH to them directly from your laptop.
+		- Instead:
+
+			Your Laptop
+			    ↓ SSH
+			Bastion Host
+			    ↓ SSH
+			Private EC2
+
+		- The bastion acts as a jump point into the private network.
+
+
+	Elastic IP (EIP)
+	----------------
+		- An Elastic IP address is a static public IPv4 address that you can allocate to your AWS account and associate with an EC2 instance or certain AWS resources.
+
+			The easiest mental model:
+
+			Normal EC2 public IP = can change
+			Elastic IP = static public IPv4 address
+
+		- Suppose your EC2 gets:
+
+			EC2 → 13.234.50.10
+
+			If you stop and start the instance, the public IPv4 address can change:
+
+			Before: 13.234.50.10
+			After:  43.205.12.77
+
+			So if you had configured:
+
+			api.example.com → 13.234.50.10
+
+			the address could become invalid after the restart. With an Elastic IP
+				Elastic IP
+				    ↓
+				EC2
+
+		- For example:
+
+			api.example.com
+			       ↓
+			13.234.50.10  ← Elastic IP
+			       ↓
+			EC2
+
+		- If the EC2 instance is stopped and started, you can keep the same Elastic IP.
+
+
+	VPC Flow Logs
+	-------------
+		- Capture info about the IP traffic going to and from network interfaces in your vpc
+
+	Direct Connect
+	--------------
+		- Establishes a dedicated network connection from your premises to AWS
+
+	Architecture
+	------------
+		                 Internet
+                            ↓
+                     Internet Gateway
+                            ↓
+              ┌──────────────────────────┐
+              │           VPC            │
+              │                          │
+              │   Public Subnet          │
+              │      ↓                   │
+              │     ALB                  │
+              │      ↓                   │
+              │   Private Subnet         │
+              │      ↓                   │
+              │     EC2                  │
+              │      ↓                   │
+              │   Private Subnet         │
+              │      ↓                   │
+              │     RDS                  │
+              │                          │
+              └──────────────────────────┘
+
+
+    Real Purpose of VPC
+    -------------------
+    	- VPC gives you control over network isolation, routing, addressing, and connectivity for your AWS resources.
+    	- Security is a major benefit, but not the only purpose. You get to decide:
+    		- Who can communicate with whom? 
+	    		ALB → EC2 ✅
+				EC2 → RDS ✅
+				Internet → RDS ❌
+			- Which resources are publicly reachable?
+				ALB → Public
+				EC2 → Private
+				RDS → Private
+			- How do private resources reach external services?
+				Private EC2 → NAT Gateway → Internet
+			- How can private resources access AWS services?
+				Private EC2 → VPC Endpoint → S3
+
+		- What bad can happen if everything is public?
+			- SSH can be attacked
+				Let's say you expose 22 → 0.0.0.0/0, attackers can attempt:
+					SSH
+					 ↓
+					username/password or stolen/weak credentials
+				Even with key authentication, exposing SSH unnecessarily increases attack surface.
+			
+			- A vulnerable application becomes directly reachable. An attacker can attack the application directly.
+
+		- But VPC itself isn't the security boundary. You need multiple layers:
+
+				VPC
+				 ├── Subnets
+				 ├── Route Tables
+				 ├── Internet Gateway / NAT
+				 ├── Security Groups
+				 ├── Network ACLs
+				 └── VPC Endpoints
+
+
+	Demo
+	----
+
+		Create VPC, Subnet, Route table, IGW
+		------------------------------------
+		- VPC -> Create ->  my-vpc-01 -> IPv4 CIDR : 10.0.0.0/16 -> Create
+		- Subnet -> Create -> Name: public-subnet -> Select vpc -> Select AZ -> IPv4 subnet CIDR block: 10.0.1.0/24
+		- Add another subnet -> private-subnet -> CIDR block: 10.0.2.0/24
+		- Go to my-vpc-01, you will see subnets. 
+		- A default route table is already associated - this is called main route table
+		- Go to route table -> In routes tab you will see :
+
+			Destination 	Target
+			0.0.0.0/0 		igw-0b878cd2636a5b662 		(Destination (0.0.0.0/0): Represents all possible IPv4 addresses on the public internet)
+			172.31.0.0/16 	local 	((172.31.0.0/16): Your VPC's own internal CIDR block.)
+
+
+			What it means: Any network traffic leaving your VPC that isn’t destined for an internal IP is sent to the Internet Gateway out to the public web. Because this route exists, any subnet associated with this route table functions as a public subnet.
+
+			Any traffic destined for an IP address within this same VPC (e.g., EC2 instance A talking to EC2 instance B) is routed internally across the AWS network without touching a gateway or the internet.
+
+
+
+
+		- Internet Gateway -> Create -> my-igw-01 
+		- Goto the my-igw-01 -> Attach vpc -> my-vpc-01
+
+		- Create a route my-rtb-01 
+		- Goto subnet association -> Edit subnet association -> Add public-subnet
+		- Edit routes -> Add -> 0.0.0.0/0 -> Add internet gateway
+
+
+		Create EC2 instance and associate it
+		------------------------------------
+		- Create EC2 instance and during vpc selection, give private subnet
+		- After creation, the ip address will be in the range of subnet
+
+
+
+
+
+
+
+
+16. AWS ECS (Elastic Container Service)
+=======================================
+
+	Intro:
+	------
+		- AWS's managed container orchestration service. Docker runs containers. ECS manages many Docker containers.
+		- It allows you to run, stop, and manage Docker and other containerized applications across a cluster of servers without needing to set up or manage your own complex container management infrastructure (like Kubernetes).
+		- Alternative to kubernetes. ECS handles this orchestration:
+
+		                 ECS
+		                  |
+		        ┌─────────┼─────────┐
+		        ↓         ↓         ↓
+		    Container  Container  Container
+
+
+	 ECS vs EC2
+	 ----------
+	 	- EC2 Gives you a virtual machine. You manage much of the underlying server.
+
+		 	EC2
+			 ↓
+			Linux
+			 ↓
+			Docker
+			 ↓
+			Your container
+
+		- ECS Manages the containers.
+
+			ECS
+			 ↓
+			Your containers
+
+		- ECS can run containers using EC2 infrastructure or using AWS Fargate.
+
+	ECS vs Kubernetes
+	-----------------
+		- ECS = AWS container orchestration
+			Kubernetes = general-purpose container orchestration platform
+		- ECS is AWS-specific and generally simpler to operate.
+		- EKS is AWS's managed Kubernetes service.
+
+	ECS Cluster
+	-----------	
+		- A cluster is a logical grouping of ECS capacity/services.
+			ECS Cluster
+			├── Service A
+			│   ├── Task
+			│   └── Task
+			│
+			└── Service B
+			    ├── Task
+			    └── Task
+
+	    - Task Definition: describes how your container should run. (like a pod yaml)
+	    	Docker image, cpu, memory, ports
+
+    	- Task: running instance of a task definition.
+
+    		ECS can launch:
+
+			Task 1
+			Task 2
+			Task 3
+
+			So:
+
+			Task Definition
+			      ↓
+			Running Tasks
+
+		- Service: ensures that the desired number of tasks keep running.
+				Suppose you configure: Desired tasks = 3
+				ECS maintains:
+					Task 1 ✅
+					Task 2 ✅
+					Task 3 ✅
+				If Task 2 crashes: ECS can launch a replacement:
+
+	Launch types: EC2 vs Fargate
+	----------------------------
+		- ECS on EC2
+			- You manage the underlying EC2 instances. You are responsible for the EC2 capacity.
+					ECS
+					 ↓
+					EC2 instances
+					 ↓
+					Containers
+		
+		- ECS with Fargate
+			- AWS manages the underlying compute infrastructure. You don't manage the servers yourself.
+			- This is very similar to the idea you learned with Lambda, but Fargate runs containers rather than individual functions.
+
+				ECS
+				 ↓
+				Fargate
+				 ↓
+				Containers
+
+	Architecture
+	------------
+		Internet
+		   ↓
+		ALB
+		   ↓
+		ECS Service
+		   ↓
+		Fargate Tasks
+		   ↓
+		Spring Boot Containers
+
+	ECR (Elastic Container Registry)
+	--------------------------------
+		- AWS service for storing container images.
+
+	ECS vs EKS
+	----------
+
+		| ECS                              | EKS                                     |
+		| -------------------------------- | --------------------------------------- |
+		| AWS-native                       | Managed Kubernetes                      |
+		| Easier to start                  | More complex                            |
+		| AWS-specific                     | Kubernetes standard                     |
+		| AWS controls orchestration model | Kubernetes API/control plane            |
+		| Great for AWS-centric teams      | Great when Kubernetes ecosystem matters |
+
+	- For companies deeply invested in Kubernetes: EKS can make sense.
+	- For a simpler AWS-native architecture: ECS + Fargate can be very attractive.
+
+
+
+
+17. AWS EKS (Elastic Kubernetes Service)
+========================================
+
+	Intro:
+	------
+		- Fully managed kubernetes cluster infra
+			Kubernetes = container orchestration platform
+			EKS = Kubernetes managed by AWS
+		- running standard Kubernetes on AWS without you having to manage the Kubernetes control plane yourself.
+			You
+			 ↓
+			EKS
+			 ↓
+			AWS manages Kubernetes control plane
+			 ↓
+			You run your applications
+
+	Architecture
+	------------
+					        EKS Cluster
+		                         |
+		         ┌───────────────┴───────────────┐
+		         ↓                               ↓
+		   Control Plane                    Data Plane
+		   (AWS managed)                    (your workloads)
+		                                           |
+		                                  ┌────────┼────────┐
+		                                  ↓        ↓        ↓
+		                                 Pod      Pod      Pod
+
+    	- Control Plane contains:
+    		API Server
+			Scheduler
+			Controller Manager
+			etcd
+    		         
+		- Data Plane : This is where your application containers actually run. Depending on your architecture, you can use:
+			- EC2 worker nodes
+			- EKS + Fargate
+
+	EKS with EC2 worker nodes
+	-------------------------
+			EKS Control Plane
+			       ↓
+			Managed Node Group
+			       ↓
+			EC2 instances
+			       ↓
+				Pods
+
+		- For example:
+			Node 1
+			├── Pod A
+			├── Pod B
+			└── Pod C
+
+			Node 2
+			├── Pod D
+			├── Pod E
+			└── Pod F
+
+
+	EKS with Fargate
+	----------------
+
+		EKS
+		 ↓
+		Fargate
+		 ↓
+		Pods
+
+		- This means you don't manage the underlying EC2 worker nodes.
+		- This is conceptually similar to what you learned with ECS + Fargate:
+
+
+	A realistic EKS architecture
+	-----------------------------
+
+					       Internet
+                              ↓
+                           Route 53
+                              ↓
+                         CloudFront
+                              ↓
+                             ALB
+                              ↓
+                       EKS Ingress
+                              ↓
+                ┌─────────────┼─────────────┐
+                ↓             ↓             ↓
+          User Service   Order Service  Payment Service
+                ↓             ↓             ↓
+              Pods           Pods          Pods
+                └─────────────┬─────────────┘
+                              ↓
+                            RDS
+                              +
+                            Redis
+                              +
+                             S3
+
+
+
+18. AWS SQS (Simple Queue Service)
+==================================
+
+	Intro:
+	------
+		- AWS SQS is managed message queue that lets applications communicate asynchronously.
+		- SQS = a buffer between a producer and a consumer
+		- Suppose your consumer can process only: 100 messages/sec
+			but suddenly producers generate: 1,000 messages/sec, SQS can absorb the burst:
+		- It has its own internal architecture (not kafka based)
+
+	Two types of SQS queues
+	----------------------
+		Standard Queue
+		--------------
+			Provides:
+				- Very high throughput, unlimited no of messages in queue
+				- Default retention of messages: 4 days, maximum of 14 days
+				- Low latency (<10 ms on publish and receive)
+				- Limitation of 1,024 KB per message sent
+				- The message is persisted in SQS until a consumer deletes it
+				- Consumers Poll SQS for messages (receive up to 10 messages at a time)
+				- In case of multiple consumers, the queue acts as a work-sharing mechanism. 
+				- Can have out of order messages - Best-effort ordering
+				- At-least-once delivery: Messages can potentially be delivered more than once.
+
+						Message A
+						   ↓
+						Consumer
+
+						Message A
+						   ↓
+						Could be delivered again
+
+					Therefore, consumers should generally be idempotent.
+
+					For example:
+
+						Consumer 1 → Payment for Order 123
+						Consumer 2 → Payment for Order 123
+
+						You don't want two payments.
+
+				- SQS Standard doesn't guarantee that a message will never be delivered more than once. Your application should handle duplicate processing safely.
+
+
+		FIFO Queue
+		----------
+			FIFO = First In, First Out. Designed for:
+				- Limited throughput: 300 msg/s without batching, 3000 msg/s with
+				- Ordering - Messages are processed in order by the consumer
+				- Exactly-once processing behavior within SQS's FIFO semantics (using Deduplication ID)
+				- FIFO also supports message deduplication.
+
+
+		|                    | Standard                | FIFO                                                   |
+		| ------------------ | ----------------------- | ------------------------------------------------------ |
+		| Throughput         | Very high               | Lower than Standard                                    |
+		| Ordering           | Best effort             | ✅ Guaranteed ordering within applicable message groups |
+		| Duplicate delivery | Possible                | Deduplication support                                  |
+		| Use case           | General async workloads | Ordered processing                                     |
+
+
+	Visibility Timeout
+	------------------
+		- When a consumer pulls a message, that message enters a Visibility Timeout period. 
+		- During this window (default is 30 sec), the message remains in the queue but becomes invisible to other 
+			consumers to prevent duplicate processing. 
+		- If the worker successfully finishes the task, it deletes the message. If it crashes, the timeout expires, 	
+			and the message reappears in the queue for another worker to pick up.
+
+			If successful:
+
+				Consumer
+				   ↓
+				DeleteMessage
+				   ↓
+				Message removed ✅
+
+			If the consumer crashes before deleting it:
+
+				Consumer ❌
+				   ↓
+				Visibility timeout expires
+				   ↓
+				Message becomes visible again
+
+		- This gives SQS a retry mechanism.
+
+
+	Dead Letter Queue (DLQ)
+	-----------------------
+		- If a consumer repeatedly fails to process a specific message (e.g., due to malformed data), SQS can 
+			automatically route it to a DLQ after a set number of maximum receives. 
+		- This isolates "poison pill" messages so they don't block the main workflow, allowing engineering teams 
+			to inspect and debug them later.
+
+
+	Long Polling
+	------------
+		- Normally, a consumer might repeatedly ask:
+			"Any messages?"
+			"Any messages?"
+			"Any messages?"
+		- This is inefficient.
+		- With long polling, SQS waits for messages for a specified period before returning an empty response. Conceptually:
+
+			Consumer
+			   ↓
+			"Give me messages"
+			   ↓
+			SQS waits
+			   ↓
+			Message arrives
+			   ↓
+			Return message
+
+		- Long polling can reduce unnecessary API calls and improve efficiency.
+
+	SQS is pull-based
+	-----------------
+		- Consumer pulls the message. With a typical consumer:
+			Consumer
+			   ↓
+			Poll SQS
+			   ↓
+			Receive messages
+		- The application retrieves messages
+
+	SQS is serverless
+	-----------------
+		- You don't manage: EC2, Kafka broker, OS, Queue server
+		- AWS manages the underlying queue infrastructure.
+
+	SQS + Lambda
+	------------
+		- This is a very common AWS architecture.
+
+			Producer
+			   ↓
+			SQS
+			   ↓
+			Lambda
+			   ↓
+			Process event
+
+		- Suppose your Spring Boot service creates an order:
+
+			Spring Boot
+			   ↓
+			SQS
+			   ↓
+			Lambda
+			   ↓
+			Send notification
+
+		- Lambda can scale processing based on messages available in the queue, subject to the relevant concurrency and service limits.
+
+
+	SQS vs Kafka
+	------------
+		- They both deal with messages/events, but they're not the same thing.
+
+		- SQS
+			- Producer -> Queue -> Consumer
+			- It is primarily a managed queue.
+			- Once a message is successfully processed and deleted, it's removed from the queue.
+			- SQS = work queue (Process this task) - Message is work to be processed
+			- SQS is naturally suited to: "Multiple workers need to share the work."
+
+		- Kafka
+			- Producer -> Topic -> Partitions -> Consumer groups
+			- Kafka is a distributed event streaming platform where records are retained according to topic retention policies.
+			- Different consumer groups can independently consume the same event stream.
+			- Kafka = event stream (Here is an event that happened) - Event is retained in a log
+			- Kafka is naturally suited to: "Multiple independent applications need to consume the same event."
+
+		- The distinction isn't absolute, but it's a useful starting point.
+
+
+	SQS vs SNS
+	----------
+		- SQS is One-to-one-ish queue consumption model
+		- SNS is Publish/subscribe
+
+			Publisher
+			    ↓
+			   SNS
+			  / | \
+			 ↓  ↓  ↓
+			SQS Lambda Email
+
+		- SNS is commonly used to fan out a message to multiple subscribers.
+		- SQS can then independently process the resulting work.
+
+	Usecases:
+	---------
+
+		- SQS as a buffer to database writes
+		- SQS to decouple between application tiers
+
+
+
+19. AWS SNS (Simple Notification Service)
+==================================
+
+	Intro:
+	------
+		- AWS's managed publish/subscribe (pub/sub) messaging service.
+		- SNS = publish one message and deliver it to multiple subscribers.
+		- SNS is primarily push-based: you publish a message to an SNS topic, and SNS attempts to deliver a copy to each subscribed endpoint.
+
+			     Publisher
+                    ↓
+                   SNS
+              /     |      \
+             ↓      ↓       ↓
+           SQS    Lambda   Email
+
+       - The publisher sends one message to an SNS Topic. SNS then fans out that message to its subscribers.
+       - For example:
+
+			Order Service
+			     ↓
+			"Order 123 created"
+			     ↓
+			 SNS Topic
+			  /   |    \
+			 ↓    ↓     ↓
+			SQS  Lambda Email
+
+			All three subscribers can receive the notification.
+
+	Topic
+	-----
+		- A Topic is the communication channel in SNS. 
+		- Eg: Topic: OrderEvents: 
+			Publishers send messages to the topic:
+
+				Order Service
+				     ↓
+				OrderEvents
+
+			Subscribers subscribe to it:
+
+				OrderEvents
+				├── Email SQS Queue
+				├── Analytics SQS Queue
+				└── Notification Lambda
+
+
+	SNS message filtering
+	---------------------
+		- SNS can filter messages so that subscribers receive only the messages they're interested in.
+
+			Suppose you publish:
+
+			{
+			  "eventType": "ORDER_CREATED"
+			}
+
+			You could configure subscriptions so:
+
+			Order Queue
+			→ receives ORDER_CREATED
+
+
+	SNS + SQS
+	---------
+		- This combination is extremely common. Suppose an order is created:
+
+			Order Service
+			      ↓
+			   SNS Topic
+			      ↓
+			┌─────┼─────┐
+			↓     ↓     ↓
+			SQS-A SQS-B Lambda
+
+		   	SQS-A might be: Email Service
+			SQS-B: Analytics Service
+			Lambda: Notification Service
+
+		- Each system receives its own copy.
+		- That gives you fan-out + durable buffering.
+
+	SNS and Kafka
+	-------------
+		| SNS                              | SQS               | Kafka                                     |
+		| -------------------------------- | ----------------- | ----------------------------------------- |
+		| Pub/sub                          | Queue             | Event streaming                           |
+		| Fan-out                          | Work distribution | Persistent event log                      |
+		| Topic                            | Queue             | Topic + partitions                        |
+		| Multiple subscribers get message | Consumers compete | Consumer groups can independently consume |
+		| AWS managed                      | AWS managed       | Kafka/MSK                                 |
+
+	SNS vs EventBridge
+	-------------------
+		- SNS : Focused on messaging and fan-out: Publisher → SNS → Subscribers
+		- EventBridge
+
+			Focused more on event routing between AWS services, SaaS applications, and custom applications, often using event patterns:
+
+			Event
+			 ↓
+			EventBridge
+			 ↓
+			Rules
+			 ↓
+			Different targets
+
+	Security
+	--------
+		- In-flight encryption using HTTPS API
+		- At-rest encryption using KMS keys
+
+
+
+20. AWS Kinesis
+===============
+
+	Intro:
+	------
+		- Amazon Kinesis is AWS's platform for collecting, streaming, processing, and analyzing data in real time
+		- Kinesis = continuous stream of events/data
+
+			Producers
+			   ↓
+			Kinesis Data Stream
+			   ↓
+			Consumers
+
+		- For example, imagine millions of application events:
+
+			User clicked
+			Order created
+			Payment completed
+			Sensor reading
+			Log generated
+
+		- Instead of storing these events only for immediate processing, Kinesis lets you ingest and retain the 
+			stream so consumers can read it in real time.
+		- Similar to kafka
+
+	Kinesis Data Streams
+	--------------------
+		- core Kinesis service
+		- A stream contains data records, and those records are distributed across shards.
+
+			      Kinesis Data Stream
+	                      |
+	          ┌───────────┼───────────┐
+	          ↓           ↓           ↓
+	       Shard 1     Shard 2     Shard 3
+	          ↓           ↓           ↓
+	       Records      Records      Records
+
+
+	 Record
+	 ------
+	 	- A record is an individual piece of data sent to the stream.
+
+			For example:
+
+			{
+			  "userId": "123",
+			  "event": "PURCHASE",
+			  "amount": 500
+			}
+		- A producer sends it to Kinesis using a partition key.
+
+	Shards
+	------
+		- A shard is the basic throughput unit of a Kinesis Data Stream.
+		- AWS currently documents a shard as supporting:
+			1 MB/sec or 1,000 records/sec for writes
+			2 MB/sec for reads under the documented shard limits.
+		- Conceptually:
+			Stream
+			├── Shard 1
+			├── Shard 2
+			└── Shard 3
+
+	Partition Key
+	------------
+		- Kinesis hashes the partition key to determine which shard receives the record. 
+		- Records with the same partition key map to the same shard.
+
+	Retention period
+	----------------
+		- Kinesis Data Streams stores records for a retention period. The default is currently 24 hours
+		- The consumer doesn't make the record disappear just by reading it.
+
+			Record
+			   ↓
+			Consumer reads it
+			   ↓
+			Record remains until retention expires
+
+		- This gives ability to reprocess (replay) data by consumers
+
+	Checkpointing
+	-------------
+		- Consumers keep track of how far they have processed in the stream. This is called checkpointing.
+
+			Shard:
+			A B C D E F G H
+
+			Processed:
+			A B C D
+			        ↑
+			    checkpoint
+
+	Kinesis + Lambda
+	----------------
+		Application
+		    ↓
+		Kinesis
+		    ↓
+		Lambda
+		    ↓
+		Process events
+
+
+
+
+20. AWS KMS (Key Management Service)
+===================================
+
+	Intro:
+	------
+		- AWS KMS (Key Management Service) is a managed AWS service for creating, controlling, and using encryption keys.
+		- KMS manages the keys used to encrypt and decrypt your data.
+		- Suppose you have data in S3:
+				Application
+				     │
+				     ▼
+				    S3
+				     │
+				     ▼
+				Sensitive data
+
+			You don't want someone who gains access to the underlying storage to be able to read the data. So you encrypt it:
+
+				Plaintext
+				    │
+				    ▼
+				Encryption key
+				    │
+				    ▼
+				Ciphertext
+
+		- The problem becomes: Where do we securely store and manage the encryption key? That's where KMS comes in.
+
+	              AWS KMS
+	                 │
+	                 ▼
+	          Encryption Key
+	                 │
+	        ┌────────┼────────┐
+	        ▼        ▼        ▼
+	       S3       EBS      RDS
+
+
+
+	       	What am I protecting?
+		       │
+		       ├── Network traffic?
+		       │       └── TLS / HTTPS
+		       │
+		       ├── Password/credential?
+		       │       └── Secrets Manager
+		       │
+		       ├── TLS certificate?
+		       │       └── ACM
+		       │
+		       └── Data at rest?
+		               └── KMS
+
+           
+
+	Encryption at Rest
+	------------------
+		- KMS is heavily used for encryption at rest.
+		- KMS supports both - Symmetric and Asymmetric Keys
+		- Encryption at Rest refers to securing data that is stored physically or digitally on a medium—such as hard drives, 
+			solid-state drives (SSDs), cloud storage buckets, or databases—when it is not actively moving across a network.
+		- While encryption in transit (like HTTPS/TLS) protects your data while it travels from point A to point B, 
+			encryption at rest protects your data while it is sitting still in storage.
+
+		- Why Encryption at Rest Matters
+			- Protection Against Theft: If a physical server, laptop, or backup tape is stolen, the data cannot be read 
+				without the decryption keys (which are usually stored separately).
+
+			- Regulatory Compliance: Many industry standards and data privacy laws (such as GDPR, HIPAA, and PCI-DSS) 
+				legally mandate that sensitive user data must be encrypted while stored.
+
+			- Mitigating Insider Threats: Prevents rogue employees or unauthorized users who might gain low-level 
+				access to storage systems from reading sensitive files.
+
+	AWS Managed Key vs Customer Managed Key
+	---------------------------------------
+		- AWS managed key : AWS creates/manages the key for a particular AWS service.
+			You have less control over the key.
+		- Customer managed key (CMK): You create/manage the KMS key yourself. You get more control over things such as:x
+			key policy
+			permissions
+			rotation
+			disabling
+			deletion scheduling
+			cross-account usage
+
+
+		Do I need control over the encryption key?
+		       │
+		       ├── No → AWS-managed encryption
+		       │
+		       └── Yes → Customer-managed KMS key
+
+	KMS Key Policy
+	--------------
+		- KMS uses key policies to control who can use/manage a KMS key.
+
+			For example:
+
+			KMS Key
+			   │
+			   └── Key Policy
+			          │
+			          ├── Application Role → Encrypt/Decrypt
+			          │
+			          └── Admin Role → Manage key
+
+		- This is different from simply having an IAM policy. A useful mental model:
+
+			IAM Policy
+			    +
+			KMS Key Policy
+			    ↓
+			Can the principal use the KMS key?
+
+		- So if an application has: kms:Decrypt in its IAM policy but the KMS key policy doesn't 
+			permit the required access, the operation may still fail.
+
+		- Suppose an EC2 application needs to decrypt an encrypted S3 object. You might have:
+
+					EC2
+					 │
+					 ▼
+					IAM Role
+					 │
+					 ├── s3:GetObject
+					 │
+					 └── kms:Decrypt
+					 │
+					 ▼
+					S3
+					 │
+					 ▼
+					KMS
+
+			There are therefore two separate permission questions:
+
+				1. Can the application access S3? s3:GetObject
+				2. Can it use the KMS key? kms:Decrypt
+
+	Envelope Encryption
+	-------------------
+		- You generally don't want KMS to directly encrypt every large piece of application data.
+		- Instead, AWS commonly uses envelope encryption. Conceptually:
+
+	                KMS
+	                 │
+	                 ▼
+	           		KMS Key
+	                 │
+	                 ▼
+	        Data Encryption Key
+	                 │
+	                 ▼
+	       Encrypt actual data
+
+		- So there are two keys conceptually:
+
+			KMS Key
+			   │
+			   └── protects Data Encryption Key (DEK)
+
+			Data Encryption Key
+			   │
+			   └── encrypts actual data
+
+   		- The data is encrypted using the data encryption key. The KMS key protects the data encryption key.
+   		- Imagine you have a 10 GB file. You don't want your application to send the entire 10 GB through a 
+   			centralized key-management service just to encrypt it.
+		- This provides both:
+			efficient encryption of large data
+			centralized key management
+
+
+
+
+
+22. AWS Secret Manager
+======================
+
+	Intro:
+	------
+		- AWS Secrets Manager is a managed service for securely storing, retrieving, and rotating sensitive information, such as:
+			Database usernames/passwords
+			API keys
+			OAuth credentials
+			Application secrets
+			Other sensitive configuration
+
+		- A bad approach is: application.properties
+				db.username=admin
+				db.password=MyPassword123
+
+			Instead: The application retrieves the secret at runtime.
+
+				                    AWS Secrets Manager
+				                           │
+				                    DB username/password
+				                           │
+				                           ▼
+				Application ───────────────┘
+
+		- The application uses an IAM role to access secret. For example:
+
+			EC2
+			 │
+			 └── IAM Role
+			       │
+			       └── secretsmanager:GetSecretValue
+			                    │
+			                    ▼
+			             Secrets Manager
+
+
+     Encryption at rest
+     ------------------
+     	- Secrets Manager encrypts secrets at rest. It integrates with AWS KMS.
+     	       Secrets Manager
+                    │
+                    ▼
+              Encrypted Secret
+                    │
+                    ▼
+                   KMS
+                    │
+                    ▼
+              Encryption Key
+
+   	Automatic Secret Rotation
+   	-------------------------
+   		- Suppose your application uses: RDS password. You don't want the same password to remain valid forever.
+		- Secrets Manager can support automatic rotation. Conceptually:
+
+		        Secrets Manager
+		              │
+		              │ rotation
+		              ▼
+		       New DB credentials
+		              │
+		              ▼
+             		RDS
+		- Instead of manually changing: password123 every few months, rotation can be automated.
+
+
+
+
+23. AWS Certificate Manager (ACM)
+=================================
+
+	Intro:
+	------
+		- AWS Certificate Manager (ACM) is a managed AWS service used to provision, manage, and 
+			deploy SSL/TLS certificates for your applications.
+		- Provide in-flight encryption for websites (HTTPS)
+		- Supports both public and private TLS certificates. Free of charge for public TLS certificates
+		- A TLS certificate provides the identity information and public key needed for that authentication. The flow is roughly:
+
+			Browser
+			   │
+			   │ HTTPS
+			   ▼
+			ALB
+			   │
+			   └── TLS Certificate
+			          │
+			          ▼
+			         ACM
+
+		- ACM manages the certificate. ACM can help with:
+			Creating/provisioning certificates
+			Storing certificates
+			Renewing certificates
+			Deploying certificates to supported AWS services
+			Managing certificate lifecycle
+
+	TLS termination at ALB
+	----------------------
+		- You can configure a certificate on the ALB:
+
+			              ACM
+			               │
+			               │ Certificate
+			               ▼
+			User ──HTTPS──► ALB ──► EC2
+
+		- The ALB uses the certificate to establish the TLS connection with the client.
+		- This is called TLS termination at the ALB.
+
+
+
+24. AWS Web Application Firewall (WAF)
+======================================
+	
+	Intro
+	-----
+		- AWS WAF is a managed service that protects web applications by inspecting HTTP/HTTPS requests and allowing, 
+			blocking, or counting them based on rules.
+		- WAF filters malicious or unwanted web requests before they reach your application.
+
+	WAF works at the HTTP/HTTPS layer
+	---------------------------------
+		- WAF examines web requests. For example:
+			HTTP Method
+			URL
+			Headers
+			Query parameters
+			Request body
+			Source IP
+		- So WAF is primarily a Layer 7 / application-layer security service. For example:
+			POST /login
+			Host: example.com
+			User-Agent: ...
+			Body: username=...
+		- WAF can inspect this request and apply rules.
+		- Integration: CloudFront, ALB, API Gateway
+
+	Usecase
+	-------
+		- SQL Injection:
+			/search?q=' OR 1=1 --
+			WAF can use SQL injection protection rules.
+		- Cross-Site Scripting (XSS)
+			An attacker may try to inject malicious JavaScript into a request. WAF can use XSS protection rules.
+		- Malicious IP addresses
+			You can block requests originating from specific IP addresses. 203.0.113.10
+        - Rate-based attacks
+        	Suppose one IP sends: 10,000 requests/minute You can configure rate-based rules to limit/block excessive requests.
+
+	WAF vs Security Groups
+	----------------------
+		- Security Group: Controls network traffic to resources such as EC2. Example:
+			Allow TCP 443
+			from 0.0.0.0/0
+		- It works primarily at the network/transport level. WAF Understands HTTP/HTTPS requests.	
+			For example:
+			Block:
+			GET /search?q=<malicious payload>
+
+	WAF vs Shield
+	-------------
+		- WAF Protects against malicious web requests.
+			SQL Injection
+			XSS
+			Bad IPs
+			Rate-based attacks
+			AWS Shield
+		- Provides protection against DDoS attacks. 
+			Large volume of malicious traffic
+		          ↓
+		       Shield
+		- They can work together
+
+	WAF vs GuardDuty
+	----------------
+		- GuardDuty Detects suspicious activity/threats in your AWS environment.
+			AWS activity
+			    ↓
+			GuardDuty
+			    ↓
+			Potential threat finding
+
+
+
+
+
+25. AWS Organizations
+=====================
+	
+	Intro
+	-----
+		- AWS Organizations is a service that lets you centrally manage multiple AWS accounts as one organization. 
+
+		            AWS Organization
+                           │
+              ┌────────────┴────────────┐
+              │                         │
+        Production Account        Non-Prod Account
+              │                         │
+         ┌────┴────┐              ┌────┴────┐
+        Prod      DB             Dev       Test
+
+        - You might have separate accounts for:
+			Production
+			Development
+			Testing
+
+	Organizational Units (OUs)
+	--------------------------
+		- logical grouping of AWS accounts. For example:
+			Organization
+			│
+			├── Production OU
+			│     ├── Prod-App
+			│     └── Prod-Database
+			│
+			├── Development OU
+			│     ├── Dev-App
+			│     └── Dev-Database
+			│
+			└── Security OU
+			      ├── Logging
+			      └── Security
+
+   	Service Control Policies
+   	------------------------
+   		- An SCP defines the maximum permissions available to accounts/users within an organization.
+   		- Think of it as a guardrail. For example:
+			SCP
+			│
+			└── Production OU
+			       │
+			       └── "Deny deleting S3 buckets"
+
+		- Even if an IAM user has:
+			{
+			  "Effect": "Allow",
+			  "Action": "s3:DeleteBucket"
+			}
+		  the operation can still be denied because of the SCP.
+
+	  	- Suppose your company doesn't want anyone in the Development OU to create expensive GPU instances.
+	  		You could apply an SCP conceptually like:
+
+				Development OU
+				      │
+				      ▼
+				Deny certain EC2 instance types
+				      │
+				      ▼
+				All accounts under this OU
+			Now even if someone has an IAM policy allowing: ec2:RunInstances the SCP can prevent the prohibited operation.
+
+
+	Consolidated Billing
+	--------------------
+		- Organizations also allows consolidated billing.
+
+	Cross-account access
+	--------------------
+		- Organizations works well with IAM roles for cross-account access.
+		- Instead of creating users in every account, a user can authenticate in one place and 
+			assume an appropriate role in another account.
+		- This is especially useful in large organizations.
+
+	AWS Control Tower
+	-----------------
+		- Instead of manually configuring dozens or hundreds of individual AWS accounts, Control Tower automates the setup process and provides ongoing guardrails to keep everything compliant.
+		- The Landing Zone: A well-architected, multi-account environment set up automatically by Control Tower. It includes a pre-configured account structure, security baselines, and identity management.
+		- Control Tower sits on top of AWS Organizations, using its hierarchical Organizational Units (OUs) to group accounts and apply policies uniformly.
+
+
+	IAM Identity Center 
+	--------------------
+		- Formerly known as AWS Single Sign-On or AWS SSO, is the central workforce identity service for managing 
+			user access across multiple AWS accounts, cloud applications, and external SaaS tools.   
+		- Manages:
+			Human users
+			Groups
+			SSO
+			Access to multiple AWS accounts
+		- A company can use IAM Identity Center to give employees appropriate access to multiple AWS accounts.
+
+		AWS Organization
+		│
+		├── Production Account
+		├── Development Account
+		├── Testing Account
+		└── Security Account
+
+		Permission Sets
+		---------------
+			- 
+
+
+	AWS Control Tower
+	-----------------
+		- A higher-level service for setting up and governing a multi-account AWS environment.
+			AWS Organizations
+			        ↓
+			Accounts + OUs + SCPs
+			        ↓
+			Control Tower
+			        ↓
+			Landing zone + governance + guardrails
+
+	SAA scenarios
+	-------------
+		- A company has 50 AWS accounts and wants centralized billing. 
+			AWS Organizations
+
+		- A company wants separate AWS accounts for Production and Development.
+			AWS Organizations + OUs/accounts
+
+		- A developer needs access to multiple AWS accounts using SSO.
+			IAM Identity Center
+
+		- A company wants to restrict what actions accounts under an OU can perform.
+			SCP
+
+		- A company wants to give a user permission to access an S3 bucket in another AWS account.
+			IAM role / resource-based policy, depending on the access design.
+
+	
+
+
+
+26. Disaster Recovery & Migrations
+==================================
+	
+	Intro
+	-----
+		- Disaster: Any event that has a negative impact on a company’s business continuity or finances
+		- Disaster recovery (DR): How to recover an application when infrastructure or an entire AWS Region fails.
+		- Migration: How to move applications, databases, and data into AWS or between environments.
+
+	RPO and RTO
+	-----------	
+		- Recovery Point Objective
+			- The maximum acceptable amount of data loss, measured in time.
+			- Example: RPO = 15 minutes means you can lose at most 15 minutes of data.
+			- How much data can we afford to lose?
+
+		- RTO — Recovery Time Objective
+			- The maximum acceptable time an application can remain unavailable after a disaster.
+			- Example: RTO = 1 hour means recovery should happen within 1 hour.
+			- How long can the service be down?
+
+		- Lower RTO and RPO generally mean higher cost and more complex architecture.
+
+
+			    Data Loss 				    Downtime
+		RPO ----------------> Disaster ----------------> RTO
+
+
+	DR strategies
+	-------------
+		- Backup and Restore	
+			- Back up data and configurations.
+			- Recreate infrastructure and restore data after a disaster.
+			- Cost is lowest. Recovery is usually the slowest. 
+			- Use when: The workload can tolerate significant downtime and data recovery delay.
+
+		- Pilot Light
+			- Keep critical core components running in the recovery Region, often including replicated data.
+			- Start or scale up the remaining infrastructure after a disaster.
+			- Use when: You need faster recovery than backup-and-restore but want to limit ongoing costs.
+
+		- Warm Standby
+			- Maintain a working, scaled-down copy of the application in another Region.
+			- Scale it up during a disaster.
+			- Use when: You need relatively fast recovery without paying for full production capacity in the secondary Region.
+
+		- Hot Site / Multi Site Approach
+			- Multiple Regions actively serve traffic.
+			- Traffic can continue in surviving Regions when one fails, assuming capacity and dependencies are designed appropriately.
+			- Use when: Downtime and data loss must be minimized, and the budget supports the complexity.
+
+	AWS services used for DR
+	------------------------
+		- AWS Backup: Centrally manage backups across supported AWS services and accounts
+		- Amazon S3 Versioning: Recover previous versions of objects
+		- S3 Cross-Region Replication (CRR)
+		- EBS Snapshots
+		- RDS automated backups / snapshots
+		- RDS Multi-AZ
+		- Route 53 failover routing
+		- AWS Elastic Disaster Recovery
+
+	Migration
+	---------
+
+	AWS DMS (Database Migration Service)
+	------------------------------------
+		- Migrates data between supported databases. It can perform an initial full load and ongoing replication 
+			using change data capture (CDC).
+		- The source database remains available during the migration
+		- Continuous Data Replication using CDC
+		- You must create an EC2 instance to perform the replication tasks
+		- Remember: Move database data, potentially with minimal downtime → DMS.
+
+	AWS DataSync - Bulk data transfer
+	---------------------------------
+		- Automates and accelerates file/object data transfers between supported on-premises storage and AWS storage, or between supported AWS storage services.
+		- Remember: Transfer lots of files efficiently → DataSync.
+
+	AWS Application Migration Service (MGN)
+	---------------------------------------
+		- Lift-and-shift (rehost) solution which simplify migrating applications to AWS
+		- Converts your physical, virtual, and cloud-based servers to run natively on AWS
+		- Supports wide range of platforms, Operating Systems, and databases
+		- Minimal downtime, reduced costs
+
+
+
+
+27. Cloudwatch
+==============
+
+	Intro
+	-----
+		- AWS monitoring and observability service that helps you monitor AWS resources and applications using 
+			metrics, 
+			logs, 
+			alarms, 
+			dashboards, and 
+			event-driven actions.
+		- Questions :
+			Is CPU utilization too high?
+			Is the application producing errors?
+			Is disk space running low?
+			Is the application responding slowly?
+			Can AWS notify you when something goes wrong?
+			Can an action happen automatically when a metric crosses a threshold?
+	
+	Cloudwatch Metrics
+	------------------
+		-  Metric is a variable to monitor
+			Metric				What it measures
+			CPUUtilization		EC2 CPU usage
+			NetworkIn			Incoming network traffic
+			NetworkOut			Outgoing network traffic
+
+		- Metrics belong to namespaces (such as AWS/EC2 or AWS/Lambda) and have timestamps
+		- Can create CloudWatch dashboards of metrics
+
+		- Dimension is an attribute of a metric (instance id, environment, etc…).
+		- Dimensions are name-value pairs used to identify or filter a metric.
+		- For example, an EC2 metric may have the dimension: InstanceId = i-1234567890abcdef0. This lets you view CPU utilization for a particular instance.
+			
+		Custom Metrics
+		--------------
+			- Can create CloudWatch Custom Metrics. Such as:
+				Number of orders processed
+				Number of failed payments
+				Queue processing time
+
+		Basic vs detailed monitoring
+		----------------------------
+			- AWS services publish metrics at different intervals
+			- Basic monitoring: typically provides metrics at 5-minute intervals at no additional CloudWatch metric charge.
+			- Detailed monitoring: provides metrics at 1-minute intervals and incurs additional charges.
+
+	Cloudwatch Logs
+	---------------
+		-  CloudWatch Logs collects and stores log events from AWS resources and applications. Examples include:
+			- Application exceptions
+			- Lambda execution logs
+			- System logs from EC2
+			- Logs from supported services such as VPC Flow Logs
+		- Log group : A collection of related log streams, often organized by application or 
+			service. For example, /aws/lambda/my-function. Usually representing an application
+		- Log stream : A sequence of log events from a particular source, such as one Lambda execution 
+			environment or an application instance.
+		- CloudWatch Logs Insights : Lets you query and analyze log data to investigate errors and 
+			diagnose application problems.
+				- Example: find a specific IP inside a log, count occurrences of “ERROR” in your logs…
+
+		- CloudWatch Logs can send logs to:
+			• Amazon S3 (exports)
+			• Kinesis Data Streams
+			• Kinesis Data Firehose
+			• AWS Lambda
+			• OpenSearch
+		- Logs are encrypted by default
+		- Can setup KMS-based encryption with your own keys
+
+		- CloudWatch Logs Subscriptions: Get a real-time log events from CloudWatch Logs for processing and analysis
+
+
+	CloudWatch Alarms
+	-----------------
+		- Alarms are used to trigger notifications for any metric
+		- Example: alert when EC2 CPU utilization remains above 80%.
+		- What can an alarm do?
+			Depending on the alarm configuration, it can:
+			- Send an SNS notification.
+			- Trigger a supported EC2 or Auto Scaling action.
+			- Trigger other supported integrations or workflows.
+
+	CloudWatch Dashboards
+	---------------------
+		- Dashboards provide a consolidated visual view of metrics and alarms.
+		- For example, an application dashboard might show:
+			- EC2 CPU utilization
+			- ALB request count and latency
+			- RDS database connections
+			- Lambda errors
+			- SQS queue depth
+		- Use dashboards when an operations team wants a single place to monitor system health.
+
+
+	Amazon EventBridge
+	------------------
+		- A serverless event bus service that receives events, matches them against rules, and routes them to targets such as Lambda functions, SQS queues, Step Functions, and other supported AWS services.
+		- EventBridge = event-driven architecture + event filtering + routing + automation
+
+
+
+
+
+26. AWS CloudTrail and AWS Config
+=================================
+
+	AWS CloudTrail
+	--------------
+		- Amazon CloudTrail is an AWS service that records and helps you audit activity in your AWS account, including actions performed through the AWS Management Console, AWS CLI, SDKs, and other supported AWS interfaces.
+		- CloudTrail = Who did what, when, and through which identity or API call in AWS?
+		- You need to investigate:
+			- Who deleted the bucket?
+			- When did it happen?
+			- Which API action was called?
+			- Which identity or role performed the action?
+
+		CloudTrail Events Retention
+		---------------------------
+			- Events are stored for 90 days in CloudTrail
+ 			- To keep events beyond this period, log them to S3 and use Athena
+
+		Event types
+		------------
+
+			Management events
+			-----------------
+			- These record control-plane activity: operations that create, modify, configure, or describe AWS resources.
+			- Examples:
+				- Creating an EC2 instance.
+				- Changing an IAM policy.
+				- Modifying a VPC security group.
+				- Deleting an RDS database.
+
+			Data events
+			-----------
+				These record higher-volume operations involving data or resource-level activity.
+				Data events generally need to be explicitly selected for logging in a trail or event data store, and additional charges can apply.
+
+				Examples:
+				- Reading or downloading an S3 object.
+				- Writing an S3 object.
+				- Invoking a Lambda function.
+
+		Organization-wide CloudTrail
+		----------------------------
+			- Suppose a company uses AWS Organizations with 40 accounts.
+			- The security team wants to collect audit logs across all accounts in a central location.
+			- An organization trail can help centrally collect supported CloudTrail events across the organization's accounts.
+
+
+		- CloudTrail Lake: Managed event data stores and SQL-based event analysis.
+		- CloudTrail Insights: Detect unusual patterns in supported API activity.
+
+		Common SAA scenario questions
+		-----------------------------
+		Scenario	Best answer
+		Investigate who terminated an EC2 instance								CloudTrail Event history
+		View recent management events without creating a trail					CloudTrail Event history
+		Audit S3 object downloads												Enable CloudTrail S3 data events
+		Retain API activity beyond 90 days										CloudTrail trail delivering to S3, or CloudTrail Lake as appropriate
+		Collect audit logs across an AWS Organization							Organization trail
+		Detect unusual API activity patterns									CloudTrail Insights
+		Trigger a notification when a matching API event occurs					CloudTrail + EventBridge or CloudWatch-based alerting
+		Centrally query and analyze large volumes of audit events				CloudTrail Lake
+
+
+	AWS Config
+	----------
+		- AWS Config is a service that tracks AWS resource configurations over time and evaluates whether resources comply with your desired configuration rules.
+		- Think of it as answering two questions:
+			1. What changed? — What was the configuration of an AWS resource before and after a change?
+			2. Is it compliant? — Does the resource follow my organization's rules and security policies?
+		- Helps with auditing and recording compliance of your AWS resources
+		- Questions that can be solved by AWS Config:
+			• Is there unrestricted SSH access to my security groups?
+			• Do my buckets have any public access?
+			• How has my ALB configuration changed over time
+
+	CloudWatch vs CloudTrail vs Config
+	----------------------------------
+		CloudWatch 
+			• Performance monitoring (metrics, CPU, network, etc…) & dashboards 
+			• Events & Alerting 
+			• Log Aggregation & Analysis • 
+		CloudTrail 
+			• Record API calls made within your Account by everyone 
+			• Can define trails for specific resources 
+			• Global Service 
+		Config 
+			• Record configuration changes 
+			• Evaluate resources against compliance rules 
+			• Get timeline of changes and compliance
+
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+Missing Topics:
+
+Amazon Bedrock - You need to know how to architect private access to foundation models using VPC endpoints, and when to recommend Bedrock vs SageMaker AI.
+
+Capacity Blocks for ML - reserving GPU instances for machine learning training. Know that Capacity Blocks are different from standard Reserved Instances.
+
+Reserved Instance policy change - AWS restricted RI purchases to a single customer — you can no longer resell unused RIs on the RI Marketplace to other customers. This affects cost optimization questions.
+
+Increased weight on serverless and event-driven architectures: Lambda, EventBridge, Step Functions, and API Gateway appear more frequently than in early 2024.
+
+
+
+
+
+
+AWS Storage Gateway
+Amazon ElastiCache
+AWS Step Functions:
+
+Transit Gateway
+
+Cost optimization domain
+	Cost Explorer, Budgets, Compute Optimizer and Trusted Advisor.
+	Compute vs EC2 Instance Savings Plans.
+	Data transfer cost rules (cross-AZ, cross-Region, NAT Gateway charges).
+	S3 Intelligent-Tiering vs lifecycle rules.
+
+
+Gemini
+
+1. Hybrid Storage & Networking (Very High Exam Weight)
+AWS Storage Gateway: Understanding the types (File Gateway, Volume Gateway, Tape Gateway) and when to use them to bridge on-premises data centers with S3.
+
+AWS Direct Connect vs. AWS Site-to-Site VPN: Knowing when to choose a secure IPsec VPN over the public internet versus a dedicated, high-speed private connection (Direct Connect).
+
+Transit Gateway: Managing complex hub-and-spoke connectivity across dozens of VPCs and on-premises networks (replaces complex mesh VPC peering).
+
+2. Advanced Database & Caching Patterns
+Amazon ElastiCache: In-memory caching (Redis vs. Memcached) used to offload database read traffic and manage session states.
+
+Amazon Redshift & Athena: Redshift (fully managed data warehouse for OLAP workloads) and Athena (serverless interactive query service for data directly in S3 using SQL).
+
+Database Migration & Aurora Global: Mentioning Aurora Global Databases for low-latency global reads and fast cross-region disaster recovery.
+
+3. Serverless & Application Integration Edge Cases
+AWS Step Functions: Coordinating multiple AWS services (Lambda, ECS, etc.) into serverless visual workflows/state machines (crucial for long-running workflows that exceed Lambda's 15-minute limit).
+
+Amazon EventBridge (Deep Dive): Advanced event routing, schema registries, and integrating SaaS partner events.
+
+API Gateway Advanced Features: Caching API responses, throttling limits, stage deployments, and usage plans.
+
+4. Cost Optimization & Management
+AWS Trusted Advisor: Automated checks for cost optimization, security, performance, and fault tolerance.
+
+AWS Pricing Calculator & Compute Savings Plans: Knowing the financial difference between On-Demand, Reserved Instances, Spot Instances, and Savings Plans (Compute vs. EC2 Instance Savings Plans).
+
+AWS Budgets & Cost Allocation Tags: Tracking and controlling cloud spend across teams/departments.
+
+
+Claude
+
+Other storage: EFS, the FSx family (Windows File Server, Lustre, NetApp ONTAP, OpenZFS), Storage Gateway (File, Volume and Tape), and Transfer Family. Many questions ask “EBS vs EFS vs FSx vs S3.”
+API Gateway: It’s in your learning path but has no section. Cover REST vs HTTP APIs, throttling, caching, Lambda integration, and Cognito authorizers.
+Transit Gateway: Since you noted that VPC peering is not transitive, this is the follow-up answer for “connect 50 VPCs plus on-premises.”
+Hybrid networking: Site-to-Site VPN, Direct Connect in depth (DX + VPN backup, DX Gateway), Gateway vs Interface endpoints, and PrivateLink.
+Global Accelerator vs CloudFront: This comparison is a classic exam trap.
+Route 53 routing policies: You have simple, weighted and latency. Add failover, geolocation, geoproximity, multivalue and IP-based routing, plus Route 53 Resolver for hybrid DNS.
+Caching: ElastiCache (Redis vs Memcached), DynamoDB DAX, and RDS Proxy.
+Cognito: User pools vs identity pools.
+Step Functions, EventBridge in depth, and Amazon MQ (“migrate an existing RabbitMQ/ActiveMQ app” → MQ).
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,22 @@
+AWS Notes Questions
+===================
+
+1. AWS Intro
+	Q1. Explain AWS and popular services
+	Q2. Explain AWS global infra? 
+		- Region, why use region? 
+		- AZ, usecase
+		- Edge locations
+	Q3. Name 4 Ways to access AWS Services
+
+2. IAM 
+	Q1. Explain IAM 
+	Q2. Explain user, groups, role (usecase) and policy
+	Q3. Role vs User
+	Q4. Principles - Least Privilege Principle, Explicit Deny
+	Q5. Security group vs IAM
+	Q6. Global service
+
+
+
+
